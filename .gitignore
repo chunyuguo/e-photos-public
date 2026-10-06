@@ -1,0 +1,34 @@
+# ESP-IDF / CMake build output
+build/
+build_c5/
+build_c6/
+build_c5_v1.3/
+build_c6_v1.3/
+build_c5_v3.2/
+build_c6_v3.2/
+build_c6_v3x/
+build_all/
+build_c5_v1.3/
+build_c5_v3.2/
+build_c6_v1.3/
+build_c6_v3.2/
+sdkconfig.old
+flasher_args.json
+
+# Component manager generated cache
+managed_components/
+
+# Editor / OS noise
+.DS_Store
+.idea/
+*.swp
+*.swo
+*~
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Local logs and temp files
+*.log
+*.tmp

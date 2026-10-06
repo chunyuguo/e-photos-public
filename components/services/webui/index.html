@@ -1,0 +1,4956 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>E-Photo</title>
+    <link rel="stylesheet" href="style.css?v=v0.3.22-home-info-3" />
+  </head>
+  <body>
+    <div id="app" class="app-shell">
+      <main class="app-panels">
+        <section class="app-panel active" data-tab-panel="home">
+          <section class="card now-playing-card">
+            <div class="device-info" aria-label="设备与网络信息">
+              <span class="device-info__label">设备：</span>
+              <span class="device-info__value" id="homeDeviceName">E-Photo</span>
+              <span class="device-info__label device-info__network-label">网络：</span>
+              <span class="device-info__value" id="homeWifiName">未连接 Wi-Fi</span>
+            </div>
+            <div class="preview-stage preview-stage-landscape">
+              <img id="currentPhotoPreview" class="preview-image" alt="当前照片预览" hidden />
+              <div id="previewEmpty" class="preview-empty">
+                <div class="preview-empty-title">还没有可展示的照片</div>
+                <div class="muted">请前往“相册”上传照片，上传完成后这里会显示电子相框正在播放的画面。</div>
+              </div>
+            </div>
+            <div class="now-playing-info">
+              <h2 id="currentPhotoName">暂无</h2>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="remote-grid home-remote-grid">
+              <button class="action-tile primary" id="prev">上一张</button>
+              <button class="action-tile" id="fitQuick">裁切铺满</button>
+              <button class="action-tile primary" id="next">下一张</button>
+              <button class="action-tile" id="screen">屏幕开关</button>
+              <button class="action-tile" id="rotate">旋转</button>
+              <button class="action-tile" id="clock">显示时钟</button>
+            </div>
+            <div class="subsection">
+              <div class="subsection-title">屏上菜单遥控</div>
+              <div class="menu-remote-grid">
+                <button class="action-chip ghost" id="menuOpen">菜单 / 确定</button>
+                <button class="action-chip ghost" id="menuUp">上移</button>
+                <button class="action-chip ghost" id="menuConfirm">返回</button>
+                <button class="action-chip ghost" id="menuDown">下移</button>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <section class="app-panel" data-tab-panel="album">
+          <section class="card">
+            <div class="upload-bar">
+              <label class="file-picker alt" for="upload">
+                <span class="file-picker-label">选择照片</span>
+                <strong id="uploadFileSummary">未选择文件</strong>
+              </label>
+              <span class="upload-limit-hint">单次最多选择 30 张</span>
+              <input type="file" id="upload" accept=".jpg,.jpeg,.png,.bmp,image/jpeg,image/png,image/bmp" multiple hidden />
+              <button id="uploadBtn">上传照片</button>
+            </div>
+            <div class="photo-toolbar">
+              <div class="photo-bulk-actions compact-actions">
+                <button class="alt" id="selectAllPhotos">全选本页</button>
+                <button class="alt" id="clearPhotoSelection">清空选择</button>
+                <button class="danger-soft" id="deleteSelectedPhotos">批量删除</button>
+              </div>
+            </div>
+            <div id="photoList" class="photo-browser grid"></div>
+            <div id="photoPagination" class="photo-pagination">
+              <div id="photoPaginationActions" class="photo-pagination-actions" hidden>
+                <button type="button" class="alt compact" id="photoPagePrev">上一页</button>
+                <select class="photo-page-current" id="photoPagePicker" aria-label="选择相册页码">
+                  <option value="1">第 1 / 1 页</option>
+                </select>
+                <button type="button" class="alt compact" id="photoPageNext">下一页</button>
+              </div>
+              <div id="photoSelectionSummary" class="muted">正在读取图库...</div>
+            </div>
+          </section>
+        </section>
+
+        <section class="app-panel" data-tab-panel="settings">
+          <section class="card">
+            <div class="stack">
+              <label class="field">
+                <span>轮播顺序</span>
+                <select id="mode">
+                  <option value="time_asc">按时间正序</option>
+                  <option value="time_desc">按时间倒序</option>
+                  <option value="random">随机</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>轮播间隔</span>
+                <select id="interval">
+                  <option value="off">不轮播</option>
+                  <option value="10s">10秒</option>
+                  <option value="1m">1分钟</option>
+                  <option value="30m">30分钟</option>
+                  <option value="60m">60分钟</option>
+                  <option value="6h">6小时</option>
+                  <option value="12h">12小时</option>
+                  <option value="24h">24小时</option>
+                  <option value="1w">1周</option>
+                  <option value="1mo">1月</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>显示比例</span>
+                <select id="fit">
+                  <option value="contain">完整显示</option>
+                  <option value="cover">裁剪铺满</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>横竖选择</span>
+                <select id="orientation">
+                  <option value="all">全部显示</option>
+                  <option value="landscape">仅横屏图片</option>
+                  <option value="portrait">仅竖屏图片</option>
+                </select>
+              </label>
+              <div class="split-fields">
+                <label class="field">
+                  <span>旋转屏幕</span>
+                  <select id="rotation">
+                    <option value="0">纵向</option>
+                    <option value="90">横向</option>
+                  </select>
+                </label>
+                <label class="field checkbox-field">
+                  <span>自动旋转</span>
+                  <input id="autoRotationEnabled" type="checkbox" />
+                </label>
+                <label class="field">
+                  <span>亮度模式</span>
+                  <select id="brightnessMode">
+                    <option value="manual">手动调节</option>
+                    <option value="auto">自动调节</option>
+                  </select>
+                </label>
+                <label class="field range-field" id="brightnessField">
+                  <span>手动亮度</span>
+                  <input id="brightnessLevel" type="range" min="0" max="100" step="1" />
+                  <div class="range-meta">
+                    <span>0%</span>
+                    <strong id="brightnessLevelValue">当前亮度：100%</strong>
+                    <span>100%</span>
+                  </div>
+                </label>
+              </div>
+              <label class="field">
+                <span>时间格式</span>
+                <select id="clockFormat">
+                  <option value="24h">24小时</option>
+                  <option value="12h">12小时</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>时钟位置</span>
+                <select id="clockPosition">
+                  <option value="top_right">右上角</option>
+                  <option value="top_left">左上角</option>
+                  <option value="bottom_left">左下角</option>
+                  <option value="bottom_right">右下角</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>时钟颜色</span>
+                <select id="clockColor">
+                  <option value="white">浅色</option>
+                  <option value="dark_gray">深色</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>时区</span>
+                <select id="timezone">
+                  <option value="CST-8">中国标准时间 UTC+8</option>
+                  <option value="JST-9">日本标准时间 UTC+9</option>
+                  <option value="GMT0">协调世界时 UTC+0</option>
+                  <option value="EST5EDT,M3.2.0/2,M11.1.0/2">美国东部时间</option>
+                  <option value="PST8PDT,M3.2.0/2,M11.1.0/2">美国太平洋时间</option>
+                  <option value="CET-1CEST,M3.5.0/2,M10.5.0/3">中欧时间</option>
+                </select>
+              </label>
+              <label class="field checkbox-field">
+                <span>联网自动校时</span>
+                <input id="autoTimeSync" type="checkbox" />
+              </label>
+              <div class="split-fields">
+                <label class="field">
+                  <span>手动调整时间</span>
+                  <input id="manualTime" type="datetime-local" step="1" />
+                </label>
+                <div class="field action-field">
+                  <span>时间校准</span>
+                  <button type="button" class="alt" id="syncTimeNow">立即联网校时</button>
+                </div>
+              </div>
+              <div class="time-status-card">
+                <div class="info-row"><span>当前时间状态</span><strong id="timeSyncStatus">-</strong></div>
+                <div class="info-row"><span>最近校时</span><strong id="lastSyncInfo">-</strong></div>
+              </div>
+              <label class="field checkbox-field">
+                <span>定时开关屏幕</span>
+                <input id="screenScheduleEnabled" type="checkbox" />
+              </label>
+              <div class="split-fields">
+                <label class="field">
+                  <span>关闭屏幕时间</span>
+                  <input id="screenOffTime" type="time" step="60" />
+                </label>
+                <label class="field">
+                  <span>开启屏幕时间</span>
+                  <input id="screenOnTime" type="time" step="60" />
+                </label>
+              </div>
+              <div class="subsection">
+                <div class="subsection-title">远程更新</div>
+              </div>
+              <div class="split-fields">
+                <label class="field">
+                  <span>自动检查</span>
+                  <select id="otaInterval">
+                    <option value="off">关闭更新</option>
+                    <option value="24h">每天检查</option>
+                    <option value="1w">每周检查</option>
+                  </select>
+                </label>
+              </div>
+              <div class="ota-check-action">
+                <button type="button" id="otaCheckNow">检查更新</button>
+              </div>
+              <div class="time-status-card" id="otaStatusDetails" hidden>
+                <div class="info-row"><span>当前版本</span><strong id="otaCurrentVersion">-</strong></div>
+                <div class="info-row"><span>更新状态</span><strong id="otaStatus">-</strong></div>
+                <div class="info-row"><span>可用版本</span><strong id="otaAvailableVersion">-</strong></div>
+                <div class="info-row"><span>最近检查</span><strong id="otaLastChecked">-</strong></div>
+              </div>
+              <div class="time-status-card history-device-card">
+                <div class="info-row"><span>历史设备</span><strong id="deviceHistorySummary">0 台</strong></div>
+                <div id="deviceHistoryList" class="device-history-list"></div>
+              </div>
+              <div class="time-status-card">
+                <div class="info-row"><span>当前来源</span><strong id="bootImageActiveSource">-</strong></div>
+                <div class="info-row"><span>最近修改</span><strong id="bootImageUpdatedAt">-</strong></div>
+              </div>
+              <input type="file" id="bootImageUpload" accept=".jpg,.jpeg,.png,.bmp,image/jpeg,image/png,image/bmp" hidden />
+              <div class="action-grid boot-image-actions">
+                <button type="button" id="bootImageUploadBtn">修改开机画面</button>
+                <button type="button" class="alt" id="bootImageRestoreDefault">恢复默认</button>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <section class="app-panel" data-tab-panel="wifi">
+          <section class="card">
+            <div class="guide-card">
+              <div class="guide-step"><span>1</span><div>每台设备都有自己的唯一地址，放在同一个局域网里也不会冲突。</div></div>
+              <div class="guide-step"><span>2</span><div>先给设备起一个容易分辨的名字，再连接家庭 Wi‑Fi，后续更容易区分多台设备。</div></div>
+              <div class="guide-step"><span>3</span><div>如果家庭 Wi‑Fi 不可用，设备会自动回到自己的热点模式。</div></div>
+            </div>
+            <div class="stack">
+              <div class="split-fields">
+                <label class="field">
+                  <span>设备名称</span>
+                  <input id="deviceName" placeholder="例如：客厅相框" maxlength="47" />
+                </label>
+                <div class="field action-field">
+                  <span>设备标识</span>
+                  <button type="button" class="alt" id="saveDeviceName">保存设备名称</button>
+                </div>
+              </div>
+              <div class="split-fields">
+                <label class="field">
+                  <span>家庭 Wi‑Fi 名称</span>
+                  <input id="ssid" placeholder="SSID" />
+                </label>
+                <label class="field">
+                  <span>家庭 Wi‑Fi 密码</span>
+                  <input id="password" placeholder="密码" type="password" />
+                </label>
+              </div>
+              <div class="action-grid">
+                <button id="connectWifi">保存并连接</button>
+                <button class="alt" id="wifiAp">开启配网热点</button>
+                <button class="alt" id="wifiScan">扫描附近 Wi‑Fi</button>
+              </div>
+            </div>
+            <div class="wifi-columns">
+              <div class="card inset-card">
+                <h3>已保存 Wi‑Fi</h3>
+                <ul id="savedWifiList" class="list-inline"></ul>
+              </div>
+              <div class="card inset-card">
+                <h3>附近 Wi‑Fi</h3>
+                <ul id="wifiScanList" class="list-inline"></ul>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <section class="app-panel" data-tab-panel="system">
+          <section class="card">
+            <div class="system-grid">
+              <div class="card inset-card">
+                <h3>运行状态</h3>
+                <div class="stack dense">
+                  <div class="info-row"><span>固件版本</span><strong id="firmwareVersion">-</strong></div>
+                  <div class="info-row"><span>图片状态</span><strong id="currentPhotoReady">-</strong></div>
+                  <div class="info-row"><span>缓存进度</span><strong id="cacheProgress">-</strong></div>
+                  <div class="info-row"><span>当前时间</span><strong id="currentTime">-</strong></div>
+                  <div class="info-row"><span>操作锁定</span><strong id="interactionLocked">-</strong></div>
+                  <div class="info-row"><span>屏幕开关</span><strong id="homeScreenState">-</strong></div>
+                  <div class="info-row"><span>屏幕亮度</span><strong id="homeBrightnessLevel">-</strong></div>
+                  <div class="info-row"><span>屏幕方向</span><strong id="homeRotationDeg">-</strong></div>
+                  <div class="info-row"><span>时钟显示</span><strong id="homeClockVisible">-</strong></div>
+                </div>
+              </div>
+              <div class="card inset-card">
+                <h3>播放配置</h3>
+                <div class="stack dense">
+                  <div class="info-row"><span>轮播顺序</span><strong id="homePlaybackMode">-</strong></div>
+                  <div class="info-row"><span>轮播间隔</span><strong id="homeInterval">-</strong></div>
+                  <div class="info-row"><span>显示比例</span><strong id="homeFitMode">-</strong></div>
+                  <div class="info-row"><span>图片方向</span><strong id="homeOrientationFilter">-</strong></div>
+                  <div class="info-row"><span>当前照片路径</span><strong id="currentPhotoPathLabel">-</strong></div>
+                </div>
+              </div>
+              <div class="card inset-card">
+                <h3>局域网访问说明</h3>
+                <div class="stack dense">
+                  <div class="info-row"><span>设备名称</span><strong id="systemDeviceName">-</strong></div>
+                  <div class="info-row"><span>唯一地址</span><strong id="wifiMdns">-</strong></div>
+                  <div class="info-row"><span>当前地址</span><strong id="accessFallback">-</strong></div>
+                  <div class="info-row"><span>连接方式</span><strong id="accessMethod">-</strong></div>
+                </div>
+                <div class="subsection">
+                  <div class="subsection-title">网络状态</div>
+                  <div class="stack dense">
+                  <div class="info-row"><span>当前模式</span><strong id="networkMode">-</strong></div>
+                  <div class="info-row"><span>当前 Wi‑Fi</span><strong id="currentSsid">-</strong></div>
+                  <div class="info-row"><span>设备热点</span><strong id="wifiApSsid">-</strong></div>
+                  <div class="info-row"><span>热点密码</span><strong id="wifiApPassword">-</strong></div>
+                  <div class="info-row"><span>STA 连接</span><strong id="wifiStaConnected">-</strong></div>
+                  <div class="info-row"><span>Wi‑Fi 信号</span><strong id="wifiStaRssi">-</strong></div>
+                  <div class="info-row"><span>STA IP</span><strong id="staIp">-</strong></div>
+                  <div class="info-row"><span>AP IP</span><strong id="apIp">-</strong></div>
+                  </div>
+                </div>
+              </div>
+              <div class="card inset-card">
+                <h3>存储与兼容性</h3>
+                <div class="stack dense">
+                  <div class="info-row"><span>TF 卡挂载</span><strong id="storageMounted">-</strong></div>
+                  <div class="info-row"><span>图库总数</span><strong id="albumPhotoCount">-</strong></div>
+                  <div class="info-row"><span>总量</span><strong id="storageCapacity">-</strong></div>
+                  <div class="info-row"><span>已用</span><strong id="storageUsed">-</strong></div>
+                  <div class="info-row"><span>兼容诊断</span><strong id="storageDiag">-</strong></div>
+                  <div class="info-row"><span>当前支持</span><strong>JPEG / PNG / BMP</strong></div>
+                </div>
+                <div class="action-stack">
+                  <button class="danger-soft" id="purgeCache">重建全部缓存</button>
+                  <button class="alt" id="rescanMedia">重扫图库</button>
+                  <button class="danger" id="factoryReset">恢复出厂设置</button>
+                </div>
+              </div>
+            </div>
+          </section>
+        </section>
+      </main>
+
+      <nav class="tabbar">
+        <button type="button" class="tabbar-btn active" data-tab-target="home">
+          <span class="tabbar-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 12l8-7 8 7"></path>
+              <path d="M6 10v9h12v-9"></path>
+              <path d="M10 19v-5h4v5"></path>
+            </svg>
+          </span>
+          <span>首页</span>
+        </button>
+        <button type="button" class="tabbar-btn" data-tab-target="album">
+          <span class="tabbar-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="5" width="16" height="14" rx="2"></rect>
+              <path d="M7 14l2-2 3 3 2-2 3 3"></path>
+              <circle cx="9" cy="9" r="1.2"></circle>
+            </svg>
+          </span>
+          <span>相册</span>
+        </button>
+        <button type="button" class="tabbar-btn" data-tab-target="settings">
+          <span class="tabbar-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="2.2"></circle>
+              <path d="M12 3.8v2.1"></path>
+              <path d="M12 18.1v2.1"></path>
+              <path d="M3.8 12h2.1"></path>
+              <path d="M18.1 12h2.1"></path>
+              <path d="M6.1 6.1l1.5 1.5"></path>
+              <path d="M16.4 16.4l1.5 1.5"></path>
+              <path d="M16.4 7.6l1.5-1.5"></path>
+              <path d="M6.1 17.9l1.5-1.5"></path>
+            </svg>
+          </span>
+          <span>设置</span>
+        </button>
+        <button type="button" class="tabbar-btn" data-tab-target="wifi">
+          <span class="tabbar-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5.5 9.5a9 9 0 0 1 13 0"></path>
+              <path d="M8.4 12.4a5 5 0 0 1 7.2 0"></path>
+              <path d="M11 15a1 1 0 0 1 2 0 1 1 0 0 1-2 0"></path>
+            </svg>
+          </span>
+          <span>网络</span>
+        </button>
+        <button type="button" class="tabbar-btn" data-tab-target="system">
+          <span class="tabbar-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="5" width="16" height="14" rx="3"></rect>
+              <path d="M9 9h6"></path>
+              <path d="M9 12h6"></path>
+              <path d="M9 15h4"></path>
+            </svg>
+          </span>
+          <span>系统</span>
+        </button>
+      </nav>
+
+      <div id="photoPreviewModal" class="photo-preview-modal" hidden>
+        <div class="photo-preview-dialog">
+          <div class="photo-preview-toolbar">
+            <div id="photoPreviewModalTitle" class="photo-preview-modal-title">预览</div>
+            <button type="button" id="photoPreviewClose" class="photo-preview-close" aria-label="关闭预览">×</button>
+          </div>
+          <div class="photo-preview-meta">
+            <div id="photoPreviewOrientationInfo" class="muted app-modal-text">方向：自动</div>
+          </div>
+          <div id="photoPreviewViewport" class="photo-preview-viewport">
+            <img id="photoPreviewModalImage" class="photo-preview-modal-image" alt="照片预览" hidden />
+            <div id="photoPreviewEmpty" class="photo-preview-empty" hidden></div>
+          </div>
+          <div class="photo-preview-actions photo-preview-actions-primary">
+            <button type="button" id="photoPreviewShow">推送到屏幕</button>
+            <button type="button" class="danger" id="photoPreviewDelete">删除</button>
+          </div>
+          <div class="photo-preview-actions photo-preview-actions-secondary">
+            <button type="button" class="alt compact" id="photoPreviewRotate90">旋转90度</button>
+            <button type="button" class="alt compact" id="photoPreviewRotate180">旋转180度</button>
+            <button type="button" class="alt compact" id="photoPreviewRotate270">旋转270度</button>
+            <button type="button" class="alt compact" id="photoPreviewResetOrientation">恢复</button>
+            <button type="button" class="alt compact" id="photoPreviewRebuild">重建缓存</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="taskModal" class="app-modal-overlay" hidden>
+        <div class="app-modal-card task-modal-card">
+          <div class="app-modal-head">
+            <strong id="taskModalTitle">处理中</strong>
+            <span id="taskModalPercent">处理中</span>
+          </div>
+          <div class="upload-progress-track app-modal-progress-track">
+            <div id="taskModalBar" class="upload-progress-bar"></div>
+          </div>
+          <div id="taskModalText" class="muted app-modal-text">请稍候...</div>
+          <div class="app-modal-actions">
+            <button type="button" class="alt" id="taskModalSecondary" hidden>取消</button>
+            <button type="button" id="taskModalPrimary" hidden>确定</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="dialogModal" class="app-modal-overlay" hidden>
+        <div class="app-modal-card">
+          <div class="app-modal-head single">
+            <strong id="dialogModalTitle">提示</strong>
+          </div>
+          <div id="dialogModalBody" class="app-modal-body"></div>
+          <div class="app-modal-actions">
+            <button type="button" class="alt" id="dialogModalSecondary" hidden>取消</button>
+            <button type="button" id="dialogModalPrimary">确定</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      window.__EPHOTO_APP_BOOTED__ = false;
+      window.__EPHOTO_APP_BOOT_ERROR__ = "";
+
+      (function() {
+        var state = {
+          snapshot: null,
+          photos: [],
+          selectedPhotoPaths: {},
+          activeTab: "home",
+          webMode: "control",
+          webModeSyncPending: false,
+          storage: null,
+          wifiSaved: [],
+          wifiScan: [],
+          error: "",
+          refreshInFlight: false,
+          refreshQueued: false,
+          refreshQueuedMode: "status",
+          refreshTimer: null,
+          nextStatusPollAt: 0,
+          scheduledRefreshTimers: {},
+          scheduledRefreshDueAt: {},
+          actionBusyUntil: 0,
+          formEditUntil: 0,
+          pollSuspendUntil: 0,
+          uploadInFlight: false,
+          uploadHideTimer: null,
+          previewPhotoPath: "",
+          previewHistoryOpen: false,
+          albumLoaded: false,
+          albumDirty: true,
+          albumOffset: 0,
+          albumTotal: 0,
+          albumPageLimit: 66,
+          albumHasMore: false,
+          albumRenderSignature: "",
+          thumbQueue: [],
+          thumbLoadCount: 0,
+          thumbObserver: null,
+          thumbPaused: false,
+          albumThumbRetryTimer: null,
+          albumThumbRetryCount: 0,
+          deleteInFlight: false,
+          factoryResetInFlight: false,
+          uploadAbortRequested: false,
+          activeUploadXhrs: [],
+          uploadWakeLock: null,
+          uploadWakeLockRequestInFlight: false,
+          dialogConfig: null,
+          brightnessApplyTimer: null,
+          brightnessApplyInFlight: false,
+          brightnessPendingValue: null,
+          settingsSaveTimer: null,
+          settingsSaveInFlight: false,
+          settingsSaveQueued: false,
+          deviceHistory: [],
+          lastHomeWifiName: "",
+          otaStatusDetailsVisible: false,
+          otaSettingsPendingUntil: 0,
+          otaPendingInterval: "",
+          otaCheckPressTimer: null,
+          otaCheckLongPressTriggered: false,
+          otaCheckTouchActive: false,
+          otaCheckSuppressMouseUntil: 0
+        };
+
+        var WEB_MODE_CONTROL = "control";
+        var WEB_MODE_ALBUM = "album";
+        var WEB_MODE_UPLOAD = "upload";
+        var STATUS_POLL_INTERVAL_CONTROL_MS = 6000;
+        var STATUS_POLL_INTERVAL_ALBUM_MS = 4000;
+        var THUMB_LOAD_CONCURRENCY = 2;
+        var ALBUM_THUMB_RETRY_MAX = 3;
+        var ALBUM_THUMB_RETRY_DELAY_MS = 900;
+        var ALBUM_THUMB_MISSING_REFRESH_DELAY_MS = 1200;
+        var UPLOAD_OPTIMIZE_MIN_BYTES = 700 * 1024;
+        var UPLOAD_OPTIMIZE_JPEG_MIN_BYTES = 4 * 1024 * 1024;
+        var UPLOAD_OPTIMIZE_MAX_EDGE = 2048;
+        var UPLOAD_OPTIMIZE_JPEG_MAX_EDGE = 2160;
+        var UPLOAD_OPTIMIZE_PNG_MAX_EDGE = 2048;
+        var UPLOAD_OPTIMIZE_JPEG_FORCE_MAX_EDGE = 2560;
+        var UPLOAD_PROGRESSIVE_JPEG_MAX_EDGE = 2560;
+        var UPLOAD_OPTIMIZE_QUALITY = 1;
+        var UPLOAD_OPTIMIZE_MIN_SAVING_BYTES = 180 * 1024;
+        var UPLOAD_OPTIMIZE_MIN_SAVING_RATIO = 0.88;
+        var UPLOAD_PREPARE_TIMEOUT_MS = 8000;
+        // Keep one Web upload batch within the firmware's deferred-cache queue.
+        var UPLOAD_BATCH_MAX_FILES = 30;
+        var DEVICE_HISTORY_STORAGE_KEY = "ephoto_device_history_v1";
+
+        function qs(id) {
+          return document.getElementById(id);
+        }
+
+        function setModalHidden(id, hidden) {
+          var node = qs(id);
+          if (node) {
+            node.hidden = !!hidden;
+          }
+          syncModalOpenState();
+        }
+
+        function syncModalOpenState() {
+          var previewOpen = qs("photoPreviewModal") && !qs("photoPreviewModal").hidden;
+          var taskOpen = qs("taskModal") && !qs("taskModal").hidden;
+          var dialogOpen = qs("dialogModal") && !qs("dialogModal").hidden;
+          document.body.classList.toggle("modal-open", !!(previewOpen || taskOpen || dialogOpen));
+        }
+
+        function closeDialogModal() {
+          state.dialogConfig = null;
+          setModalHidden("dialogModal", true);
+        }
+
+        function openDialogModal(config) {
+          var primary = qs("dialogModalPrimary");
+          var secondary = qs("dialogModalSecondary");
+          var body = qs("dialogModalBody");
+
+          state.dialogConfig = config || {};
+          setText("dialogModalTitle", state.dialogConfig.title || "提示");
+          if (body) {
+            body.innerHTML = state.dialogConfig.html || "";
+          }
+          if (primary) {
+            primary.textContent = state.dialogConfig.primaryText || "确定";
+            primary.className = state.dialogConfig.primaryDanger ? "danger" : "";
+            primary.hidden = false;
+          }
+          if (secondary) {
+            secondary.textContent = state.dialogConfig.secondaryText || "取消";
+            secondary.hidden = !state.dialogConfig.secondaryText;
+          }
+          setModalHidden("dialogModal", false);
+        }
+
+        function showInfoDialog(title, html, okText, onConfirm) {
+          openDialogModal({
+            title: title,
+            html: html,
+            primaryText: okText || "知道了",
+            onPrimary: onConfirm || null
+          });
+        }
+
+        function showConfirmDialog(title, html, confirmText, cancelText, onConfirm, danger) {
+          openDialogModal({
+            title: title,
+            html: html,
+            primaryText: confirmText || "确定",
+            secondaryText: cancelText || "取消",
+            primaryDanger: !!danger,
+            onPrimary: onConfirm || null
+          });
+        }
+
+        function setTaskModal(config) {
+          var bar = qs("taskModalBar");
+          var primary = qs("taskModalPrimary");
+          var secondary = qs("taskModalSecondary");
+          var percent = typeof config.percent === "number" ? Math.max(0, Math.min(100, config.percent)) : -1;
+
+          setText("taskModalTitle", config.title || "处理中");
+          setText("taskModalPercent", percent >= 0 ? (Math.round(percent) + "%") : (config.percentText || "处理中"));
+          setText("taskModalText", config.text || "");
+          if (bar) {
+            bar.style.width = percent >= 0 ? (Math.round(percent) + "%") : "100%";
+            bar.classList.toggle("indeterminate", percent < 0);
+          }
+          if (secondary) {
+            secondary.textContent = config.secondaryText || "取消";
+            secondary.hidden = !config.secondaryText;
+          }
+          if (primary) {
+            primary.textContent = config.primaryText || "确定";
+            primary.hidden = !config.primaryText;
+            primary.className = config.primaryDanger ? "danger" : "";
+          }
+          setModalHidden("taskModal", false);
+        }
+
+        function closeTaskModal() {
+          var bar = qs("taskModalBar");
+          if (bar) {
+            bar.style.width = "0%";
+            bar.classList.remove("indeterminate");
+          }
+          setModalHidden("taskModal", true);
+        }
+
+        function currentWebMode() {
+          if (state.uploadInFlight) {
+            return WEB_MODE_UPLOAD;
+          }
+          if (state.activeTab === "album") {
+            return WEB_MODE_ALBUM;
+          }
+          return WEB_MODE_CONTROL;
+        }
+
+        function renderWorkloadMode() {
+          var mode = state.webMode || WEB_MODE_CONTROL;
+          var app = qs("app");
+
+          if (app) {
+            app.setAttribute("data-web-mode", mode);
+          }
+          state.thumbPaused = mode === WEB_MODE_UPLOAD;
+        }
+
+        function syncWebMode(force, onSynced) {
+          var nextMode = currentWebMode();
+          if (!force && state.webMode === nextMode && !state.webModeSyncPending) {
+            renderWorkloadMode();
+            processThumbQueue();
+            if (typeof onSynced === "function") {
+              onSynced(true);
+            }
+            return;
+          }
+          state.webMode = nextMode;
+          state.webModeSyncPending = true;
+          renderWorkloadMode();
+          requestJson("PUT", "/api/v1/web/mode", { mode: nextMode }, function() {
+            state.webModeSyncPending = false;
+            if (typeof onSynced === "function") {
+              onSynced(true);
+            }
+          }, function() {
+            state.webModeSyncPending = false;
+            if (typeof onSynced === "function") {
+              onSynced(false);
+            }
+          });
+          processThumbQueue();
+        }
+
+        function nextStatusPollDelay() {
+          if (currentWebMode() === WEB_MODE_ALBUM) {
+            return STATUS_POLL_INTERVAL_ALBUM_MS;
+          }
+          if (currentWebMode() === WEB_MODE_UPLOAD) {
+            return 0;
+          }
+          return STATUS_POLL_INTERVAL_CONTROL_MS;
+        }
+
+        function armNextStatusPoll(delayMs) {
+          var delay = typeof delayMs === "number" ? delayMs : nextStatusPollDelay();
+          if (delay <= 0) {
+            state.nextStatusPollAt = 0;
+            return;
+          }
+          // Avoid synchronized polling bursts when several phones open the
+          // same device page at the same time.
+          if (typeof delayMs !== "number") {
+            delay += Math.floor(Math.random() * 700);
+          }
+          state.nextStatusPollAt = Date.now() + delay;
+        }
+
+        function readWindowNameState() {
+          try {
+            return window.name ? JSON.parse(window.name) : {};
+          } catch (e) {
+            return {};
+          }
+        }
+
+        function writeWindowNameState(data) {
+          try {
+            window.name = JSON.stringify(data || {});
+          } catch (e) {
+          }
+        }
+
+        function loadDeviceHistory() {
+          var merged = {};
+          var items = [];
+          var localItems = [];
+          var nameState = readWindowNameState();
+
+          try {
+            localItems = JSON.parse(localStorage.getItem(DEVICE_HISTORY_STORAGE_KEY) || "[]");
+          } catch (e) {
+            localItems = [];
+          }
+
+          function absorb(list) {
+            var i;
+            for (i = 0; i < list.length; i += 1) {
+              var item = list[i];
+              if (!item || !item.key) {
+                continue;
+              }
+              if (!merged[item.key] || (Number(item.lastSeenAt) || 0) >= (Number(merged[item.key].lastSeenAt) || 0)) {
+                merged[item.key] = item;
+              }
+            }
+          }
+
+          absorb(Array.isArray(localItems) ? localItems : []);
+          absorb(Array.isArray(nameState.ephotoDeviceHistory) ? nameState.ephotoDeviceHistory : []);
+
+          for (var key in merged) {
+            if (merged.hasOwnProperty(key)) {
+              items.push(merged[key]);
+            }
+          }
+          items.sort(function(a, b) {
+            return (Number(b.lastSeenAt) || 0) - (Number(a.lastSeenAt) || 0);
+          });
+          if (items.length > 16) {
+            items = items.slice(0, 16);
+          }
+          items.forEach(function(item) {
+            item.isCurrent = false;
+          });
+          state.deviceHistory = items;
+          persistDeviceHistory();
+        }
+
+        function persistDeviceHistory() {
+          var nameState = readWindowNameState();
+          nameState.ephotoDeviceHistory = state.deviceHistory.slice(0, 16);
+          writeWindowNameState(nameState);
+          try {
+            localStorage.setItem(DEVICE_HISTORY_STORAGE_KEY, JSON.stringify(state.deviceHistory.slice(0, 16)));
+          } catch (e) {
+          }
+        }
+
+        function normalizeDeviceHistoryUrl(device) {
+          if (!device) {
+            return "";
+          }
+          return device.currentOrigin || device.primaryUrl || device.mdnsUrl || device.staUrl || device.apUrl || "";
+        }
+
+        function registerCurrentDevice(snapshot) {
+          var wifi = snapshot && snapshot.wifi ? snapshot.wifi : {};
+          var hostname = wifi.hostname || "";
+          var key = hostname || window.location.origin;
+          var entry;
+          var i;
+          if (!key) {
+            return;
+          }
+
+          entry = {
+            key: key,
+            deviceName: snapshot.deviceName || wifi.deviceName || "未命名设备",
+            hostname: hostname,
+            currentOrigin: window.location.origin,
+            primaryUrl: renderAccessUrl(snapshot),
+            mdnsUrl: wifi.mdnsUrl || "",
+            staUrl: wifi.staUrl || "",
+            apUrl: wifi.apUrl || "",
+            apSsid: wifi.apSsid || "",
+            lastSeenAt: Date.now(),
+            isCurrent: true
+          };
+
+          for (i = 0; i < state.deviceHistory.length; i += 1) {
+            if (state.deviceHistory[i].key === key) {
+              state.deviceHistory[i] = entry;
+              state.deviceHistory.sort(function(a, b) {
+                return (Number(b.lastSeenAt) || 0) - (Number(a.lastSeenAt) || 0);
+              });
+              persistDeviceHistory();
+              renderDeviceHistory();
+              return;
+            }
+            state.deviceHistory[i].isCurrent = false;
+          }
+
+          state.deviceHistory.unshift(entry);
+          if (state.deviceHistory.length > 16) {
+            state.deviceHistory = state.deviceHistory.slice(0, 16);
+          }
+          persistDeviceHistory();
+          renderDeviceHistory();
+        }
+
+        function deleteHistoryDevice(key) {
+          var next = [];
+          var i;
+          for (i = 0; i < state.deviceHistory.length; i += 1) {
+            if (state.deviceHistory[i].key !== key) {
+              next.push(state.deviceHistory[i]);
+            }
+          }
+          state.deviceHistory = next;
+          persistDeviceHistory();
+          renderDeviceHistory();
+        }
+
+        function clearAllDeviceHistory() {
+          state.deviceHistory = [];
+          try {
+            localStorage.removeItem(DEVICE_HISTORY_STORAGE_KEY);
+          } catch (e) {
+          }
+          writeWindowNameState({});
+          renderDeviceHistory();
+        }
+
+        function connectHistoryDevice(key) {
+          var i;
+          for (i = 0; i < state.deviceHistory.length; i += 1) {
+            if (state.deviceHistory[i].key === key) {
+              var targetUrl = normalizeDeviceHistoryUrl(state.deviceHistory[i]);
+              if (!targetUrl) {
+                showRuntimeError("这台设备还没有可用地址");
+                return;
+              }
+              persistDeviceHistory();
+              window.location.href = targetUrl + "#settings";
+              return;
+            }
+          }
+        }
+
+        function renderDeviceHistory() {
+          var container = qs("deviceHistoryList");
+          var html = "";
+          var i;
+          if (!container) {
+            return;
+          }
+          for (i = 0; i < state.deviceHistory.length; i += 1) {
+            var item = state.deviceHistory[i];
+            var address = normalizeDeviceHistoryUrl(item);
+            html += "<div class=\"history-device-item" + (item.isCurrent ? " is-current" : "") + "\">" +
+              "<div class=\"history-device-main\">" +
+                "<strong>" + escapeHtml(item.deviceName || "未命名设备") + "</strong>" +
+                "<small>" + escapeHtml(address || (item.hostname ? ("http://" + item.hostname + ".local") : "暂无地址")) + "</small>" +
+              "</div>" +
+              "<div class=\"history-device-actions\">" +
+                "<button type=\"button\" class=\"alt\" data-device-connect=\"" + escapeHtml(item.key) + "\"" + (item.isCurrent ? " disabled" : "") + ">" + (item.isCurrent ? "当前设备" : "连接") + "</button>" +
+                "<button type=\"button\" class=\"alt\" data-device-remove=\"" + escapeHtml(item.key) + "\">删除</button>" +
+              "</div>" +
+            "</div>";
+          }
+          container.innerHTML = html || "<div class=\"muted\">当前还没有历史设备记录。</div>";
+          setText("deviceHistorySummary", state.deviceHistory.length + " 台");
+          bindDataButtons("data-device-connect", connectHistoryDevice);
+          bindDataButtons("data-device-remove", function(key) {
+            showConfirmDialog(
+              "删除历史设备",
+              "<div class=\"app-modal-note\">只删除浏览器里保存的这条设备记录，不会影响设备本身。</div>",
+              "删除",
+              "取消",
+              function() { deleteHistoryDevice(key); },
+              true
+            );
+          });
+        }
+
+        function setText(id, value) {
+          var node = qs(id);
+          if (node) {
+            node.textContent = value == null ? "" : String(value);
+          }
+        }
+
+        function bindClick(id, handler) {
+          var node = qs(id);
+          if (node) {
+            node.onclick = handler;
+          }
+        }
+
+        function autoRotationEnabledNow() {
+          return !!(state.snapshot &&
+                    state.snapshot.settings &&
+                    state.snapshot.settings.autoRotationEnabled);
+        }
+
+        function deviceAlbumVisible() {
+          return !!(state.snapshot &&
+                    state.snapshot.album &&
+                    state.snapshot.album.visible);
+        }
+
+        function deviceMenuContextActive() {
+          return !!(state.snapshot && state.snapshot.menuVisible) || deviceAlbumVisible();
+        }
+
+        function showMenuRemoteHint() {
+          showRuntimeError("屏幕菜单已打开，请使用下方菜单遥控区域继续操作。");
+          showInfoDialog(
+            "请使用菜单遥控",
+            "<div class=\"app-modal-note\">当前屏幕菜单已打开，请使用下方“屏上菜单遥控”区域操作，或先退出菜单后再使用上方按钮。</div>",
+            "知道了"
+          );
+        }
+
+        function bindEvent(id, eventName, handler, options) {
+          var node = qs(id);
+          if (node) {
+            node.addEventListener(eventName, handler, options);
+          }
+        }
+
+        function formatDurationMs(ms) {
+          var value = Number(ms) || 0;
+          if (value < 1000) {
+            return Math.round(value) + "ms";
+          }
+          return (value / 1000).toFixed(value >= 10000 ? 0 : 1) + "s";
+        }
+
+        function formatBytes(bytes) {
+          var value = Number(bytes) || 0;
+          if (value <= 0) {
+            return "0 B";
+          }
+          if (value >= 1024 * 1024) {
+            return (value / (1024 * 1024)).toFixed(value >= 10 * 1024 * 1024 ? 0 : 1) + " MB";
+          }
+          if (value >= 1024) {
+            return Math.round(value / 1024) + " KB";
+          }
+          return Math.round(value) + " B";
+        }
+
+        function formatWifiRssi(rssi) {
+          var value = Number(rssi) || 0;
+          if (!value) {
+            return "-";
+          }
+          if (value >= -55) {
+            return value + " dBm / 很强";
+          }
+          if (value >= -67) {
+            return value + " dBm / 良好";
+          }
+          if (value >= -75) {
+            return value + " dBm / 一般";
+          }
+          return value + " dBm / 偏弱";
+        }
+
+        function showUploadReport(summary) {
+          var bytesLine;
+          var prepareLine;
+          var requestLine;
+          var ratioText;
+          var html;
+          if (!summary) {
+            return;
+          }
+
+          ratioText = summary.originalBytes > 0 && summary.payloadBytes > 0 ?
+            ("，压缩后约 " + Math.round((summary.payloadBytes / summary.originalBytes) * 100) + "%") :
+            "";
+          bytesLine = formatBytes(summary.originalBytes) + " -> " + formatBytes(summary.payloadBytes) + ratioText;
+          prepareLine = formatDurationMs(summary.prepareMs) + "（" + summary.optimizedCount + "/" + summary.files + " 张做了预处理）";
+          requestLine = formatDurationMs(summary.requestMs) + (summary.avgTransferKiBps > 0 ? ("，均速 " + summary.avgTransferKiBps + " KB/s") : "");
+          html =
+            "<div class=\"stack dense\">" +
+              "<div class=\"info-row\"><span>批次结果</span><strong>" + escapeHtml("成功 " + summary.successCount + "，失败 " + summary.failedCount + "，共 " + summary.files + " 张") + "</strong></div>" +
+              "<div class=\"info-row\"><span>文件体积</span><strong>" + escapeHtml(bytesLine) + "</strong></div>" +
+              "<div class=\"info-row\"><span>浏览器预处理</span><strong>" + escapeHtml(prepareLine) + "</strong></div>" +
+              "<div class=\"info-row\"><span>请求总等待</span><strong>" + escapeHtml(requestLine) + "</strong></div>" +
+            "</div>";
+          showInfoDialog(summary.dialogTitle || "上传完成", html, "确定");
+        }
+
+        function truncateFileName(name, maxLength) {
+          var normalizedMax = Math.max(12, maxLength || 26);
+          var value = name == null ? "" : String(name);
+          var dot = value.lastIndexOf(".");
+          var ext = dot > 0 ? value.slice(dot) : "";
+          var base = dot > 0 ? value.slice(0, dot) : value;
+          var extLimit = 10;
+          var keepHead;
+          var keepTail;
+          if (value.length <= normalizedMax) {
+            return value;
+          }
+          if (ext.length > extLimit) {
+            ext = ext.slice(0, extLimit);
+          }
+          keepHead = Math.max(6, Math.floor((normalizedMax - ext.length - 1) * 0.6));
+          keepTail = Math.max(3, normalizedMax - ext.length - keepHead - 1);
+          if (keepHead + keepTail >= base.length) {
+            keepTail = Math.max(3, Math.floor(base.length / 3));
+            keepHead = Math.max(6, normalizedMax - ext.length - keepTail - 1);
+          }
+          return base.slice(0, keepHead) + "…" + base.slice(base.length - keepTail) + ext;
+        }
+
+        function formatUploadStep(prefix, current, total, fileName) {
+          return prefix + " " + current + "/" + total + "：" + truncateFileName(fileName, 28);
+        }
+
+        function replaceFileExtension(name, extension) {
+          var value = name == null ? "photo" : String(name);
+          var dot = value.lastIndexOf(".");
+          var base = dot > 0 ? value.slice(0, dot) : value;
+          return base + extension;
+        }
+
+        function encodeFilenameHeader(name) {
+          var value = name == null ? "" : String(name);
+          var bytes;
+          var binary = "";
+          var i;
+          if (window.TextEncoder) {
+            bytes = new TextEncoder().encode(value);
+            for (i = 0; i < bytes.length; i += 1) {
+              binary += String.fromCharCode(bytes[i]);
+            }
+            return btoa(binary);
+          }
+          return encodeURIComponent(value);
+        }
+
+        function createUploadItem(file, payload, uploadName, optimized) {
+          return {
+            payload: payload || file,
+            size: payload && typeof payload.size === "number" ? payload.size : (Number(file.size) || 0),
+            name: uploadName || file.name,
+            displayName: file.name,
+            optimized: !!optimized,
+            prepareMs: 0,
+            prepareMode: "original",
+            originalSize: Number(file && file.size) || 0
+          };
+        }
+
+        function readFileAsDataUrl(file, onSuccess, onError) {
+          var reader = new FileReader();
+          reader.onload = function() {
+            onSuccess(reader.result);
+          };
+          reader.onerror = function() {
+            onError(reader.error || new Error("read file failed"));
+          };
+          reader.readAsDataURL(file);
+        }
+
+        function readFileSliceAsArrayBuffer(file, maxBytes, onSuccess, onError) {
+          var reader;
+          var blob;
+          if (!file || !window.FileReader || typeof file.slice !== "function") {
+            onError(new Error("slice read unavailable"));
+            return;
+          }
+          reader = new FileReader();
+          reader.onload = function() {
+            onSuccess(reader.result);
+          };
+          reader.onerror = function() {
+            onError(reader.error || new Error("read slice failed"));
+          };
+          blob = file.slice(0, Math.min(Number(file.size) || 0, maxBytes));
+          reader.readAsArrayBuffer(blob);
+        }
+
+        function isProgressiveJpegMarker(marker) {
+          return marker === 0xC2 || marker === 0xC6 || marker === 0xCA || marker === 0xCE;
+        }
+
+        function markerHasSegmentLength(marker) {
+          if (marker === 0x01 || marker === 0xD8 || marker === 0xD9) {
+            return false;
+          }
+          return !(marker >= 0xD0 && marker <= 0xD7);
+        }
+
+        function detectJpegEncodingProfile(file, done) {
+          readFileSliceAsArrayBuffer(file, 256 * 1024, function(buffer) {
+            var bytes = new Uint8Array(buffer || new ArrayBuffer(0));
+            var offset = 0;
+            var marker;
+            var segmentLength;
+
+            if (bytes.length < 4 || bytes[0] !== 0xFF || bytes[1] !== 0xD8) {
+              done({ known: false, progressive: false });
+              return;
+            }
+
+            offset = 2;
+            while (offset + 1 < bytes.length) {
+              while (offset < bytes.length && bytes[offset] !== 0xFF) {
+                offset += 1;
+              }
+              while (offset < bytes.length && bytes[offset] === 0xFF) {
+                offset += 1;
+              }
+              if (offset >= bytes.length) {
+                break;
+              }
+
+              marker = bytes[offset];
+              offset += 1;
+
+              if (!markerHasSegmentLength(marker)) {
+                continue;
+              }
+              if (marker === 0xDA) {
+                break;
+              }
+              if (offset + 1 >= bytes.length) {
+                break;
+              }
+
+              segmentLength = (bytes[offset] << 8) | bytes[offset + 1];
+              if (segmentLength < 2 || offset + segmentLength > bytes.length) {
+                break;
+              }
+
+              if (isProgressiveJpegMarker(marker)) {
+                done({ known: true, progressive: true });
+                return;
+              }
+              if (marker >= 0xC0 && marker <= 0xCF &&
+                  marker !== 0xC4 && marker !== 0xC8 && marker !== 0xCC) {
+                done({ known: true, progressive: false });
+                return;
+              }
+
+              offset += segmentLength;
+            }
+
+            done({ known: false, progressive: false });
+          }, function() {
+            done({ known: false, progressive: false });
+          });
+        }
+
+        function inspectUploadPreparation(file, done) {
+          var plan = {
+            forceJpegBaseline: false,
+            shouldOptimize: shouldOptimizeUpload(file),
+            maxEdge: 0
+          };
+
+          if (!isJpegUpload(file)) {
+            done(plan);
+            return;
+          }
+
+          detectJpegEncodingProfile(file, function(profile) {
+            plan.forceJpegBaseline = !!(profile && profile.progressive);
+            if (plan.forceJpegBaseline) {
+              plan.maxEdge = UPLOAD_PROGRESSIVE_JPEG_MAX_EDGE;
+            }
+            done(plan);
+          });
+        }
+
+        function buildBootImageBlobFromFile(file, onSuccess, onError) {
+          readFileAsDataUrl(file, function(dataUrl) {
+            var image = new Image();
+            image.onload = function() {
+              var canvas = document.createElement("canvas");
+              var ctx = canvas.getContext("2d", { alpha: false });
+              var targetW = 1280;
+              var targetH = 800;
+              var scale = Math.max(targetW / image.width, targetH / image.height);
+              var drawW = Math.round(image.width * scale);
+              var drawH = Math.round(image.height * scale);
+              var offsetX = Math.round((targetW - drawW) / 2);
+              var offsetY = Math.round((targetH - drawH) / 2);
+              canvas.width = targetW;
+              canvas.height = targetH;
+              if (!ctx) {
+                onError(new Error("canvas unavailable"));
+                return;
+              }
+              ctx.fillStyle = "#000";
+              ctx.fillRect(0, 0, targetW, targetH);
+              ctx.imageSmoothingEnabled = true;
+              ctx.imageSmoothingQuality = "high";
+              ctx.drawImage(image, offsetX, offsetY, drawW, drawH);
+              canvas.toBlob(function(blob) {
+                if (!blob) {
+                  onError(new Error("encode boot image failed"));
+                  return;
+                }
+                onSuccess(blob);
+              }, "image/jpeg", 0.98);
+            };
+            image.onerror = function() {
+              onError(new Error("load image failed"));
+            };
+            image.src = dataUrl;
+          }, onError);
+        }
+
+        function isJpegUpload(file) {
+          var name = (file && file.name ? file.name : "").toLowerCase();
+          var type = (file && file.type ? file.type : "").toLowerCase();
+          return /image\/jpe?g/.test(type) || /\.jpe?g$/i.test(name);
+        }
+
+        function isPngLikeUpload(file) {
+          var name = (file && file.name ? file.name : "").toLowerCase();
+          var type = (file && file.type ? file.type : "").toLowerCase();
+          return /image\/png/.test(type) || /\.png$/i.test(name);
+        }
+
+        function isBmpUpload(file) {
+          var name = (file && file.name ? file.name : "").toLowerCase();
+          var type = (file && file.type ? file.type : "").toLowerCase();
+          return /image\/bmp/.test(type) || /image\/x-ms-bmp/.test(type) || /\.bmp$/i.test(name);
+        }
+
+        function isSupportedUploadFile(file) {
+          return isJpegUpload(file) || isPngLikeUpload(file) || isBmpUpload(file);
+        }
+
+        function splitUploadFiles(files) {
+          var valid = [];
+          var invalid = [];
+          var i;
+          for (i = 0; i < files.length; i += 1) {
+            if (isSupportedUploadFile(files[i])) {
+              valid.push(files[i]);
+            } else {
+              invalid.push(files[i]);
+            }
+          }
+          return { valid: valid, invalid: invalid };
+        }
+
+        function shouldOptimizeUpload(file) {
+          var name = (file && file.name ? file.name : "").toLowerCase();
+          var type = (file && file.type ? file.type : "").toLowerCase();
+          var size = Number(file && file.size) || 0;
+          var imageLike = /image\/(jpeg|jpg|png|webp)/.test(type) || /\.(jpg|jpeg|png|webp)$/i.test(name);
+          if (!imageLike) {
+            return false;
+          }
+          if (isJpegUpload(file)) {
+            return size >= UPLOAD_OPTIMIZE_JPEG_MIN_BYTES;
+          }
+          return size >= UPLOAD_OPTIMIZE_MIN_BYTES;
+        }
+
+        function prepareUploadItem(file, done) {
+          var objectUrl;
+          var image;
+          var plan = null;
+          var isJpeg;
+          var isPngLike;
+          var width;
+          var height;
+          var scale;
+          var targetWidth;
+          var targetHeight;
+          var targetMaxEdge;
+          var canvas;
+          var context;
+          var settled = false;
+          var timeoutId = 0;
+          var prepareStartedAt = window.performance && performance.now ? performance.now() : Date.now();
+
+          function markPrepared(item, mode) {
+            var prepared = item || createUploadItem(file, file, file ? file.name : "photo.jpg", false);
+            var now = window.performance && performance.now ? performance.now() : Date.now();
+            prepared.prepareMs = Math.max(0, Math.round(now - prepareStartedAt));
+            prepared.prepareMode = mode || prepared.prepareMode || "original";
+            prepared.originalSize = Number(file && file.size) || prepared.originalSize || 0;
+            return prepared;
+          }
+
+          function finish(item) {
+            if (settled) {
+              return;
+            }
+            settled = true;
+            if (timeoutId) {
+              clearTimeout(timeoutId);
+            }
+            done(item);
+          }
+
+          if (!file || !window.URL || !window.HTMLCanvasElement) {
+            finish(markPrepared(createUploadItem(file, file, file ? file.name : "photo.jpg", false), "skip"));
+            return;
+          }
+
+          timeoutId = setTimeout(function() {
+            if (objectUrl) {
+              URL.revokeObjectURL(objectUrl);
+            }
+            finish(markPrepared(createUploadItem(file, file, file.name, false), "timeout-fallback"));
+          }, UPLOAD_PREPARE_TIMEOUT_MS);
+
+          function beginCanvasPrepare() {
+            objectUrl = URL.createObjectURL(file);
+            image = new Image();
+            image.onload = function() {
+              var originalSize;
+              var uploadName;
+              var forceBaseline;
+              var imageMaxEdge;
+              var forceJpegMaxEdge;
+              var needsResize;
+              var preparedMode;
+
+              width = image.naturalWidth || image.width || 0;
+              height = image.naturalHeight || image.height || 0;
+              isJpeg = isJpegUpload(file);
+              URL.revokeObjectURL(objectUrl);
+              objectUrl = "";
+
+              if (!width || !height) {
+                finish(markPrepared(createUploadItem(file, file, file.name, false), "invalid-size"));
+                return;
+              }
+
+              isPngLike = isPngLikeUpload(file);
+              forceBaseline = !!(plan && plan.forceJpegBaseline);
+              imageMaxEdge = Math.max(width, height);
+              forceJpegMaxEdge = isJpeg && imageMaxEdge > UPLOAD_OPTIMIZE_JPEG_FORCE_MAX_EDGE;
+              targetMaxEdge = forceBaseline
+                ? (plan && plan.maxEdge ? plan.maxEdge : 0)
+                : (isJpeg
+                    ? (forceJpegMaxEdge ? UPLOAD_OPTIMIZE_JPEG_FORCE_MAX_EDGE : UPLOAD_OPTIMIZE_JPEG_MAX_EDGE)
+                    : (isPngLike ? UPLOAD_OPTIMIZE_PNG_MAX_EDGE : UPLOAD_OPTIMIZE_MAX_EDGE));
+              if (targetMaxEdge > 0) {
+                scale = Math.min(1, targetMaxEdge / Math.max(width, height));
+              } else {
+                scale = 1;
+              }
+              needsResize = scale < 0.999;
+              if (!forceBaseline && !forceJpegMaxEdge && !(plan && plan.shouldOptimize)) {
+                finish(markPrepared(createUploadItem(file, file, file.name, false), "no-op"));
+                return;
+              }
+
+              targetWidth = Math.max(1, Math.round(width * scale));
+              targetHeight = Math.max(1, Math.round(height * scale));
+              canvas = document.createElement("canvas");
+              canvas.width = targetWidth;
+              canvas.height = targetHeight;
+              context = canvas.getContext("2d", { alpha: false });
+              if (!context || !canvas.toBlob) {
+                finish(markPrepared(createUploadItem(file, file, file.name, false), "canvas-fallback"));
+                return;
+              }
+
+              context.fillStyle = "#000";
+              context.fillRect(0, 0, targetWidth, targetHeight);
+              context.imageSmoothingEnabled = true;
+              context.imageSmoothingQuality = "high";
+              context.drawImage(image, 0, 0, targetWidth, targetHeight);
+              canvas.toBlob(function(blob) {
+                if (!blob || !blob.size) {
+                  finish(markPrepared(createUploadItem(file, file, file.name, false), "blob-fallback"));
+                  return;
+                }
+
+                originalSize = Number(file.size) || 0;
+                if (!forceBaseline &&
+                    (blob.size >= originalSize ||
+                     (originalSize - blob.size) < UPLOAD_OPTIMIZE_MIN_SAVING_BYTES ||
+                     (originalSize > 0 && (blob.size / originalSize) > UPLOAD_OPTIMIZE_MIN_SAVING_RATIO))) {
+                  finish(markPrepared(createUploadItem(file, file, file.name, false), "small-gain-fallback"));
+                  return;
+                }
+
+                uploadName = replaceFileExtension(file.name || "photo", ".jpg");
+                preparedMode = forceBaseline
+                  ? (needsResize ? "progressive-baseline-resized" : "progressive-baseline")
+                  : (forceJpegMaxEdge ? "oversize-resized" : "optimized");
+                finish(markPrepared(createUploadItem(file, blob, uploadName, true), preparedMode));
+              }, "image/jpeg", UPLOAD_OPTIMIZE_QUALITY);
+            };
+            image.onerror = function() {
+              if (objectUrl) {
+                URL.revokeObjectURL(objectUrl);
+                objectUrl = "";
+              }
+              finish(markPrepared(createUploadItem(file, file, file.name, false), "decode-fallback"));
+            };
+            image.src = objectUrl;
+          }
+
+          inspectUploadPreparation(file, function(nextPlan) {
+            if (settled) {
+              return;
+            }
+            plan = nextPlan || {
+              forceJpegBaseline: false,
+              shouldOptimize: false
+            };
+            if (!plan.forceJpegBaseline && !plan.shouldOptimize && !isJpegUpload(file)) {
+              finish(markPrepared(createUploadItem(file, file, file ? file.name : "photo.jpg", false), "skip"));
+              return;
+            }
+            beginCanvasPrepare();
+          });
+        }
+
+        function setUploadUiState(active) {
+          var input = qs("upload");
+          var button = qs("uploadBtn");
+          state.uploadInFlight = !!active;
+          if (active) {
+            requestUploadWakeLock();
+          } else {
+            releaseUploadWakeLock();
+          }
+          if (!active) {
+            state.activeUploadXhrs = [];
+            state.uploadAbortRequested = false;
+          }
+          if (input) {
+            input.disabled = !!active;
+            if (!active) {
+              input.value = "";
+            }
+          }
+          if (button) {
+            button.disabled = !!active;
+            button.textContent = active ? "上传中..." : "上传照片";
+          }
+          updateUploadFileSummary();
+          syncWebMode(false);
+          updateInteractiveState();
+        }
+
+        function requestUploadWakeLock() {
+          var wakeLockApi = window.navigator && window.navigator.wakeLock;
+          if (!state.uploadInFlight ||
+              state.uploadWakeLock ||
+              state.uploadWakeLockRequestInFlight ||
+              !wakeLockApi ||
+              typeof wakeLockApi.request !== "function") {
+            return;
+          }
+
+          state.uploadWakeLockRequestInFlight = true;
+          wakeLockApi.request("screen").then(function(lock) {
+            state.uploadWakeLockRequestInFlight = false;
+            if (!state.uploadInFlight) {
+              if (lock && typeof lock.release === "function") {
+                lock.release();
+              }
+              return;
+            }
+            state.uploadWakeLock = lock;
+            if (lock && typeof lock.addEventListener === "function") {
+              lock.addEventListener("release", function() {
+                if (state.uploadWakeLock === lock) {
+                  state.uploadWakeLock = null;
+                }
+              });
+            }
+          }).catch(function() {
+            // Wake Lock needs browser support and may require a secure context.
+            // The visible upload warning remains the reliable fallback.
+            state.uploadWakeLockRequestInFlight = false;
+          });
+        }
+
+        function releaseUploadWakeLock() {
+          var lock = state.uploadWakeLock;
+          state.uploadWakeLock = null;
+          if (!lock || typeof lock.release !== "function") {
+            return;
+          }
+          lock.release().catch(function() {
+          });
+        }
+
+        function uploadSafetyNotice() {
+          return "请保持本页面在前台，不要锁屏、退出浏览器或关闭小程序；手机系统无法保证后台上传继续执行。";
+        }
+
+        function showUploadStatus(title, percent, text) {
+          var normalized = typeof percent === "number" && percent >= 0 ? Math.max(0, Math.min(100, percent)) : -1;
+          if (state.uploadHideTimer) {
+            clearTimeout(state.uploadHideTimer);
+            state.uploadHideTimer = null;
+          }
+          setTaskModal({
+            title: title || "正在上传照片",
+            percent: normalized >= 0 ? normalized : null,
+            percentText: "处理中",
+            text: (text ? text + "\n" : "") + uploadSafetyNotice(),
+            secondaryText: state.uploadInFlight ? "终止上传" : "",
+            primaryText: ""
+          });
+        }
+
+        function hideUploadStatus(delayMs) {
+          if (state.uploadHideTimer) {
+            clearTimeout(state.uploadHideTimer);
+          }
+          state.uploadHideTimer = setTimeout(function() {
+            closeTaskModal();
+            state.uploadHideTimer = null;
+          }, delayMs || 0);
+        }
+
+        function setHidden(id, hidden) {
+          var node = qs(id);
+          if (node) {
+            node.hidden = !!hidden;
+          }
+        }
+
+        function escapeHtml(value) {
+          var text = value == null ? "" : String(value);
+          return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+        }
+
+        function showBootError(message) {
+          window.__EPHOTO_APP_BOOT_ERROR__ = String(message || "unknown error");
+          if (typeof window.__EPHOTO_SHOW_BOOT_ERROR__ === "function") {
+            window.__EPHOTO_SHOW_BOOT_ERROR__(window.__EPHOTO_APP_BOOT_ERROR__);
+          }
+        }
+
+        function showRuntimeError(message) {
+          state.error = message || "";
+          if (state.error && window.console && console.warn) {
+            console.warn("[E-Photo]", state.error);
+          }
+        }
+
+        function suspendPolling(ms) {
+          var deadline = Date.now() + (ms || 0);
+          if (deadline > state.pollSuspendUntil) {
+            state.pollSuspendUntil = deadline;
+          }
+        }
+
+        function resumePolling() {
+          state.pollSuspendUntil = 0;
+        }
+
+        function requestJson(method, url, body, onSuccess, onError) {
+          return requestJsonWithOptions(method, url, body, null, onSuccess, onError);
+        }
+
+        function requestJsonWithOptions(method, url, body, options, onSuccess, onError) {
+          var xhr = new XMLHttpRequest();
+          var opts = options || {};
+          xhr.open(method, url, true);
+          xhr.timeout = typeof opts.timeout === "number" ? opts.timeout : 8000;
+          xhr.onreadystatechange = function() {
+            var data;
+            if (xhr.readyState !== 4) {
+              return;
+            }
+            try {
+              data = xhr.responseText ? JSON.parse(xhr.responseText) : {};
+            } catch (e) {
+              data = { ok: false, message: "设备返回了无法识别的数据，请稍后重试" };
+            }
+            if (xhr.status >= 200 && xhr.status < 300) {
+              onSuccess(data);
+            } else if (onError) {
+              onError(data);
+            }
+          };
+          xhr.onerror = function() {
+            if (onError) {
+              onError({ ok: false, message: "网络连接失败，请检查设备连接状态后重试" });
+            }
+          };
+          xhr.ontimeout = function() {
+            if (onError) {
+              onError({ ok: false, message: "请求超时，请稍后重试" });
+            }
+          };
+          if (body != null) {
+            xhr.setRequestHeader("Content-Type", "application/json");
+            xhr.send(JSON.stringify(body));
+          } else {
+            xhr.send();
+          }
+          return xhr;
+        }
+
+        function requestBinary(method, url, body, headers, onSuccess, onError) {
+          var xhr = new XMLHttpRequest();
+          var extraHeaders = headers || {};
+          var key;
+          xhr.open(method, url, true);
+          xhr.timeout = 20000;
+          xhr.onreadystatechange = function() {
+            var data;
+            if (xhr.readyState !== 4) {
+              return;
+            }
+            try {
+              data = xhr.responseText ? JSON.parse(xhr.responseText) : {};
+            } catch (e) {
+              data = { ok: false, message: "设备返回了无法识别的数据，请稍后重试" };
+            }
+            if (xhr.status >= 200 && xhr.status < 300) {
+              onSuccess(data);
+            } else if (onError) {
+              onError(data);
+            }
+          };
+          xhr.onerror = function() {
+            if (onError) {
+              onError({ ok: false, message: "网络连接失败，请检查设备连接状态后重试" });
+            }
+          };
+          xhr.ontimeout = function() {
+            if (onError) {
+              onError({ ok: false, message: "请求超时，请稍后重试" });
+            }
+          };
+          for (key in extraHeaders) {
+            if (Object.prototype.hasOwnProperty.call(extraHeaders, key)) {
+              xhr.setRequestHeader(key, extraHeaders[key]);
+            }
+          }
+          xhr.send(body);
+        }
+
+        function abortActiveUploads() {
+          var xhrs = state.activeUploadXhrs.slice();
+          var i;
+          state.activeUploadXhrs = [];
+          for (i = 0; i < xhrs.length; i++) {
+            try {
+              xhrs[i].abort();
+            } catch (e) {
+            }
+          }
+        }
+
+        function requestAbortUpload() {
+          if (!state.uploadInFlight) {
+            return;
+          }
+          showConfirmDialog(
+            "终止上传",
+            "<div class=\"app-modal-note\">当前上传还没有完成。终止后，未传完的照片会停止上传，已经成功传入设备的照片会继续整理缓存。</div>",
+            "终止上传",
+            "继续上传",
+            function() {
+              state.uploadAbortRequested = true;
+              abortActiveUploads();
+              closeDialogModal();
+              setTaskModal({
+                title: "正在终止上传",
+                percent: null,
+                percentText: "处理中",
+                text: "正在结束当前上传批次，请稍候..."
+              });
+            },
+            true
+          );
+        }
+
+        function interactionLocked() {
+          return !!(state.snapshot && state.snapshot.interactionLocked);
+        }
+
+        function actionCooldownMs(name) {
+          if (name === "brightness" || name === "clock" || name === "screen") {
+            return 140;
+          }
+          if (name === "prev" || name === "next" || name === "rotate") {
+            return 220;
+          }
+          return 320;
+        }
+
+        function applyOptimisticAction(name) {
+          var snapshot = state.snapshot;
+          var settings;
+          if (!snapshot || !snapshot.settings) {
+            return false;
+          }
+
+          settings = snapshot.settings;
+          if (name === "clock") {
+            settings.clockVisible = !settings.clockVisible;
+          } else if (name === "screen") {
+            settings.screenOn = settings.screenOn === false;
+          } else {
+            return false;
+          }
+
+          applySnapshot(snapshot);
+          return true;
+        }
+
+        function applyBrightnessValue(value, immediate) {
+          var nextValue = parseInt(value, 10);
+          if (getValue("brightnessMode") === "auto") {
+            return;
+          }
+          if (isNaN(nextValue)) {
+            return;
+          }
+          if (nextValue < 0) {
+            nextValue = 0;
+          }
+          if (nextValue > 100) {
+            nextValue = 100;
+          }
+
+          syncBrightnessSliderUI(nextValue);
+          state.brightnessPendingValue = nextValue;
+
+          if (state.snapshot && state.snapshot.settings) {
+            state.snapshot.settings.brightnessPercent = nextValue;
+            setText("homeBrightnessLevel", formatBrightnessLevel(nextValue));
+          }
+
+          if (state.brightnessApplyTimer) {
+            clearTimeout(state.brightnessApplyTimer);
+            state.brightnessApplyTimer = null;
+          }
+
+          if (state.brightnessApplyInFlight) {
+            return;
+          }
+
+          state.brightnessApplyTimer = setTimeout(function() {
+            var pendingValue = state.brightnessPendingValue;
+            state.brightnessApplyTimer = null;
+            state.brightnessApplyInFlight = true;
+            requestJson("PUT", "/api/v1/settings", {
+              brightnessPercent: pendingValue
+            }, function() {
+              state.brightnessApplyInFlight = false;
+              suspendPolling(500);
+              scheduleRefresh("status", 80);
+              if (state.brightnessPendingValue != null && state.brightnessPendingValue !== pendingValue) {
+                applyBrightnessValue(state.brightnessPendingValue, true);
+              }
+            }, function(error) {
+              state.brightnessApplyInFlight = false;
+              showRuntimeError((error && error.message) || "brightness update failed");
+              scheduleRefresh("status", 0);
+            });
+          }, immediate ? 0 : 140);
+        }
+
+        function saveDeviceName() {
+          var value = getValue("deviceName").trim();
+          if (!value) {
+            showRuntimeError("设备名称不能为空");
+            return;
+          }
+          holdFormState(2500);
+          requestJson("PUT", "/api/v1/settings", {
+            deviceName: value
+          }, function() {
+            suspendPolling(800);
+            scheduleRefresh("status", 120);
+          }, function(error) {
+            showRuntimeError((error && error.message) || "device name update failed");
+          });
+        }
+
+        function renderStorageDiagnostics(storage) {
+          var parts = [];
+          if (!storage) {
+            return "-";
+          }
+          if (storage.unsupportedOtherCount) {
+            parts.push("暂不支持 " + storage.unsupportedOtherCount + " 张其他格式图片");
+          }
+          if (storage.unsupportedPngCount) {
+            parts.push("有 " + storage.unsupportedPngCount + " 张 PNG 需要进一步排查");
+          }
+          if (storage.unsupportedProgressiveJpegCount) {
+            parts.push("有 " + storage.unsupportedProgressiveJpegCount + " 张 JPEG 需要进一步排查");
+          }
+          if (!parts.length) {
+            return "正常";
+          }
+          return parts.join(" / ");
+        }
+
+        function formatStorageCapacityGb(bytes) {
+          var value = Number(bytes || 0);
+          if (value <= 0) {
+            return "-";
+          }
+          return (value / 1024 / 1024 / 1024).toFixed(value >= 10 * 1024 * 1024 * 1024 ? 1 : 2) + " GB";
+        }
+
+        function formatStorageUsedPercent(storage) {
+          var used = Number(storage && storage.usedBytes || 0);
+          var capacity = Number(storage && storage.capacityBytes || 0);
+          if (capacity <= 0 || used < 0) {
+            return "-";
+          }
+          return Math.max(0, Math.min(100, Math.round((used * 100) / capacity))) + "%";
+        }
+
+        function formatTimestampMs(value) {
+          var date;
+          if (!value) {
+            return "暂无";
+          }
+          date = new Date(Number(value));
+          if (isNaN(date.getTime())) {
+            return "暂无";
+          }
+          return date.getFullYear() + "-" +
+            String(date.getMonth() + 1).padStart(2, "0") + "-" +
+            String(date.getDate()).padStart(2, "0") + " " +
+            String(date.getHours()).padStart(2, "0") + ":" +
+            String(date.getMinutes()).padStart(2, "0");
+        }
+
+        function formatOtaStage(ota) {
+          if (!ota) {
+            return "未配置";
+          }
+          if (ota.updating) {
+            return "安装中 " + (ota.progressPercent || 0) + "%";
+          }
+          switch (ota.stage) {
+            case "checking":
+              return "正在检查";
+            case "up_to_date":
+              return ota.message || "已是最新";
+            case "available":
+              return "发现新版本";
+            case "downloading":
+              return "正在下载 " + (ota.progressPercent || 0) + "%";
+            case "applying":
+              return "正在写入固件";
+            case "restarting":
+              return "即将重启";
+            case "success":
+              return "更新成功";
+            case "error":
+              return ota.message || "更新失败";
+            default:
+              return ota.message || (ota.configured ? "待检查" : "未配置");
+          }
+        }
+
+        function checkOtaNow(channel) {
+          state.otaStatusDetailsVisible = true;
+          setHidden("otaStatusDetails", false);
+          requestJson("POST", "/api/v1/ota/check", { channel: channel || "stable" }, function() {
+            waitForOtaCheckResult(channel || "stable", 0);
+          }, function(error) {
+            showRuntimeError((error && error.message) || "ota check failed");
+          });
+        }
+
+        function waitForOtaCheckResult(channel, attempt) {
+          setTimeout(function() {
+            requestJson("GET", "/api/v1/status", null, function(snapshot) {
+              applySnapshot(snapshot || {});
+              var ota = snapshot && snapshot.ota ? snapshot.ota : {};
+              if (ota.checking && attempt < 23) {
+                waitForOtaCheckResult(channel, attempt + 1);
+                return;
+              }
+              if (ota.updateAvailable && ota.availableVersion) {
+                showOtaUpdateOfferDialog();
+                return;
+              }
+              showRuntimeError(channel === "beta" ? "Beta 通道检查完成，当前没有可安装的新版本。" : (ota.message || "当前已是最新版本。"));
+              suspendPolling(1200);
+              scheduleRefresh("status", 150);
+            }, function(error) {
+              showRuntimeError((error && error.message) || "ota status load failed");
+            });
+          }, 500);
+        }
+
+        function beginOtaCheckPress() {
+          if (state.otaCheckPressTimer || state.otaCheckLongPressTriggered) {
+            return;
+          }
+          clearOtaCheckPress();
+          state.otaCheckLongPressTriggered = false;
+          state.otaCheckPressTimer = setTimeout(function() {
+            state.otaCheckPressTimer = null;
+            state.otaCheckLongPressTriggered = true;
+            showConfirmDialog(
+              "检查开发版更新",
+              "<div class=\"app-modal-note\">是否检查 beta 版本更新？此操作只会临时检查开发版，不会修改默认稳定版设置。</div>",
+              "确认",
+              "取消",
+              function() {
+                closeDialogModal();
+                checkOtaNow("beta");
+              }
+            );
+          }, 8000);
+        }
+
+        function clearOtaCheckPress() {
+          if (state.otaCheckPressTimer) {
+            clearTimeout(state.otaCheckPressTimer);
+            state.otaCheckPressTimer = null;
+          }
+        }
+
+        function shouldSuppressOtaCheckMouse() {
+          return Date.now() < (state.otaCheckSuppressMouseUntil || 0);
+        }
+
+        function endOtaCheckPress() {
+          var longPressTriggered = !!state.otaCheckLongPressTriggered;
+          clearOtaCheckPress();
+          if (longPressTriggered) {
+            state.otaCheckLongPressTriggered = false;
+            return;
+          }
+          checkOtaNow("stable");
+        }
+
+        function showOtaUpdateOfferDialog() {
+          var availableVersion = state.snapshot && state.snapshot.ota && state.snapshot.ota.availableVersion
+            ? state.snapshot.ota.availableVersion
+            : "新版本";
+          var notes = state.snapshot && state.snapshot.ota && state.snapshot.ota.releaseNotes
+            ? state.snapshot.ota.releaseNotes
+            : "当前暂无版本日志。";
+          showConfirmDialog(
+            "发现新版本 " + escapeHtml(availableVersion),
+            "<div class=\"app-modal-note app-modal-note--preline\">" + escapeHtml(notes) + "</div>",
+            "立即更新",
+            "取消",
+            function() {
+              closeDialogModal();
+              startOtaUpdate();
+            }
+          );
+        }
+
+        function startOtaUpdate() {
+          showInfoDialog(
+            "正在更新设备",
+            "<div class=\"app-modal-note\">正在下载固件，请保持设备联网并不要断电。写入完成后设备会自动重启；倒计时开始时，本页面会提示你稍后刷新页面重新连接。</div>",
+            "正在准备"
+          );
+          qs("dialogModalPrimary").disabled = true;
+          requestJson("POST", "/api/v1/ota/update", null, function() {
+            suspendPolling(200);
+            scheduleRefresh("status", 200);
+          }, function(error) {
+            closeDialogModal();
+            showRuntimeError((error && error.message) || "ota update failed");
+          });
+        }
+
+        function syncOtaProgressDialog(ota) {
+          var active = !!(ota && (ota.updating || ota.stage === "downloading" || ota.stage === "applying" || ota.stage === "restarting" || ota.rebootRequired));
+          if (!active) {
+            return;
+          }
+          var restarting = ota.stage === "restarting" || ota.rebootRequired;
+          var message = restarting
+            ? (ota.message || "设备即将重启，请稍后刷新页面重新连接。")
+            : (ota.message || (ota.stage === "applying" ? "正在写入新固件，请不要断电或关闭设备。" : "正在下载固件，请保持设备联网并不要断电。"));
+          showInfoDialog(
+            restarting ? "设备即将重启" : "正在更新设备",
+            "<div class=\"app-modal-note\">" + escapeHtml(message) + "</div><div class=\"app-modal-text\">下载、写入与重启期间请保持设备联网，不要断开电源。</div>",
+            "请等待"
+          );
+          qs("dialogModalPrimary").disabled = true;
+        }
+
+        function renderCacheProgress(snapshot) {
+          var total = Number(snapshot.cacheBuildTotal || 0);
+          var done = Number(snapshot.cacheBuildDone || 0);
+          var failed = Number(snapshot.cacheBuildFailed || 0);
+          var photoTotal = Number(snapshot.cacheBuildPhotoTotal || 0);
+          var photoIndex = Number(snapshot.cacheBuildPhotoIndex || 0);
+          if (!snapshot.cacheBuildActive) {
+            if (total > 0) {
+              return (photoTotal > 0 ? ("照片 " + photoIndex + "/" + photoTotal) : "缓存已完成") +
+                (total > 0 ? (" · " + Math.floor((done * 100) / total) + "%") : "") +
+                (failed > 0 ? (" · 失败 " + failed) : "");
+            }
+            return "空闲";
+          }
+          if (total <= 0) {
+            return "初始化中";
+          }
+          return (photoTotal > 0 ? ("照片 " + photoIndex + "/" + photoTotal) : "正在生成缓存") +
+            " · " + Math.floor((done * 100) / total) + "%" +
+            (failed > 0 ? (" · 失败 " + failed) : "");
+        }
+
+        function formatPhotoOrientationFix(photo) {
+          var manual = photo ? Number(photo.manualRotationDeg || 0) : 0;
+          var effective = photo ? Number(photo.effectiveRotationDeg || 0) : 0;
+          var exif = photo ? Number(photo.exifOrientation || 1) : 1;
+          var base = exif > 1 ? ("自动识别 EXIF " + exif) : "自动方向";
+          if (manual > 0) {
+            return base + "，手动追加旋转 " + manual + "°，当前生效 " + effective + "°";
+          }
+          return base + (effective > 0 ? ("，当前生效 " + effective + "°") : "");
+        }
+
+        function renderAccessHint(snapshot) {
+          var wifi = snapshot && snapshot.wifi ? snapshot.wifi : {};
+          if (wifi.staConnected && wifi.staIp) {
+            return "同一局域网内可直接打开。";
+          }
+          if (wifi.apSsid && wifi.apIp) {
+            return "先连设备热点，再打开热点地址。";
+          }
+          return "等待网络就绪。";
+        }
+
+        function renderAccessMethod(snapshot) {
+          var wifi = snapshot && snapshot.wifi ? snapshot.wifi : {};
+          if (wifi.staConnected && wifi.staIp) {
+            return "家庭 Wi‑Fi";
+          }
+          if (wifi.apSsid && wifi.apIp) {
+            return "设备热点";
+          }
+          return "初始化中";
+        }
+
+        function renderAccessUrl(snapshot) {
+          var wifi = snapshot && snapshot.wifi ? snapshot.wifi : {};
+          if (wifi.staConnected && wifi.mdnsUrl) {
+            return wifi.mdnsUrl;
+          }
+          if (wifi.staConnected && wifi.staIp) {
+            return "http://" + wifi.staIp;
+          }
+          if (wifi.apUrl) {
+            return wifi.apUrl;
+          }
+          if (wifi.apIp) {
+            return "http://" + wifi.apIp;
+          }
+          return "-";
+        }
+
+        function renderAccessFallback(snapshot) {
+          var wifi = snapshot && snapshot.wifi ? snapshot.wifi : {};
+          if (wifi.staConnected && wifi.staIp) {
+            return "http://" + wifi.staIp;
+          }
+          if (wifi.apIp) {
+            return wifi.apUrl || ("http://" + wifi.apIp);
+          }
+          return "-";
+        }
+
+        function formatNetworkMode(value) {
+          if (value === "sta") return "仅家庭网";
+          if (value === "ap") return "仅设备热点";
+          if (value === "disconnected") return "离线";
+          return value || "-";
+        }
+
+        function formatPlaybackMode(value) {
+          if (value === "random") return "随机";
+          if (value === "time_desc") return "按时间倒序";
+          return "按时间正序";
+        }
+
+        function formatInterval(value) {
+          var map = {
+            off: "不轮播",
+            "10s": "10秒",
+            "1m": "1分钟",
+            "30m": "30分钟",
+            "60m": "60分钟",
+            "6h": "6小时",
+            "12h": "12小时",
+            "24h": "24小时",
+            "1w": "1周",
+            "1mo": "1月"
+          };
+          return map[value] || "-";
+        }
+
+        function formatFitMode(value) {
+          return value === "cover" ? "裁切铺满" : "完整显示";
+        }
+
+        function formatOrientationFilter(value) {
+          if (value === "landscape") return "仅横屏图片";
+          if (value === "portrait") return "仅竖屏图片";
+          return "全部显示";
+        }
+
+        function formatBrightnessLevel(value) {
+          var level = typeof value === "number" ? value : parseInt(value || "0", 10);
+          if (isNaN(level)) {
+            return "-";
+          }
+          if (level < 0) level = 0;
+          if (level > 100) level = 100;
+          return level + "%";
+        }
+
+        function formatAmbientLight(settings) {
+          var mv = Number(settings && settings.ambientLightMv || 0);
+          var percent = Number(settings && settings.ambientLightPercent || 0);
+          if (mv <= 0 && percent <= 0) {
+            return "等待传感器";
+          }
+          return percent + "% / " + mv + "mV";
+        }
+
+        function syncBrightnessSliderUI(value) {
+          var level = typeof value === "number" ? value : parseInt(value || "0", 10);
+          var slider = qs("brightnessLevel");
+          if (isNaN(level)) {
+            level = 100;
+          }
+          if (level < 0) level = 0;
+          if (level > 100) level = 100;
+          setInputValue("brightnessLevel", String(level));
+          setText("brightnessLevelValue", "当前亮度：" + level + "%");
+          if (slider) {
+            slider.style.setProperty("--range-progress", level + "%");
+          }
+        }
+
+        function updateUploadFileSummary() {
+          var input = qs("upload");
+          var files = input && input.files ? input.files : null;
+          var separated;
+          if (!files || !files.length) {
+            setText("uploadFileSummary", "未选择文件");
+            return;
+          }
+          separated = splitUploadFiles(Array.prototype.slice.call(files));
+          if (separated.valid.length > UPLOAD_BATCH_MAX_FILES) {
+            setText("uploadFileSummary", "已选 " + files.length + " 个文件，可上传图片超过单次 " + UPLOAD_BATCH_MAX_FILES + " 张限制");
+            return;
+          }
+          if (separated.invalid.length > 0) {
+            if (separated.valid.length > 0) {
+              setText("uploadFileSummary", "已选 " + files.length + " 个文件，可上传 " + separated.valid.length + " 张图片");
+              return;
+            }
+            setText("uploadFileSummary", "所选文件都不是受支持的图片");
+            return;
+          }
+          if (files.length === 1) {
+            setText("uploadFileSummary", files[0].name || "已选择 1 张照片");
+            return;
+          }
+          setText("uploadFileSummary", "已选择 " + files.length + " 张照片");
+        }
+
+        function handleUploadSelection() {
+          var input = qs("upload");
+          var selectedFiles = input && input.files ? Array.prototype.slice.call(input.files) : [];
+          var separated = splitUploadFiles(selectedFiles);
+
+          if (separated.valid.length > UPLOAD_BATCH_MAX_FILES) {
+            // A browser exposes the selected FileList only after the picker is
+            // confirmed.  Reject it here, before the user can press Upload.
+            input.value = "";
+            setText("uploadFileSummary", "未选择文件");
+            showInfoDialog(
+              "单次最多上传 " + UPLOAD_BATCH_MAX_FILES + " 张",
+              "<div class=\"app-modal-note\">本次选择了 " + separated.valid.length +
+                " 张可上传图片，已取消本次选择。请重新选择不超过 " +
+                UPLOAD_BATCH_MAX_FILES + " 张图片后上传。</div>",
+              "知道了"
+            );
+            return;
+          }
+
+          updateUploadFileSummary();
+        }
+
+        function syncBrightnessModeUI(mode, settings) {
+          var isAuto = mode === "auto";
+          var slider = qs("brightnessLevel");
+          var field = qs("brightnessField");
+          if (field) {
+            field.classList.toggle("is-auto", isAuto);
+          }
+          if (slider) {
+            slider.disabled = !!isAuto || currentWebMode() === WEB_MODE_UPLOAD || state.deleteInFlight;
+          }
+          setText("ambientLightInfo", formatAmbientLight(settings || {}));
+        }
+
+        function syncScreenScheduleUI() {
+          var enabled = getChecked("screenScheduleEnabled");
+          var screenOnTime = qs("screenOnTime");
+          var screenOffTime = qs("screenOffTime");
+          if (screenOnTime) {
+            screenOnTime.disabled = !enabled || currentWebMode() === WEB_MODE_UPLOAD || state.deleteInFlight;
+          }
+          if (screenOffTime) {
+            screenOffTime.disabled = !enabled || currentWebMode() === WEB_MODE_UPLOAD || state.deleteInFlight;
+          }
+        }
+
+        function syncRotationControlUI(settings) {
+          var rotationSelect = qs("rotation");
+          var rotateButton = qs("rotate");
+          var autoRotationEnabled = settings
+            ? settings.autoRotationEnabled === true
+            : getChecked("autoRotationEnabled");
+          if (rotationSelect) {
+            rotationSelect.disabled = !!autoRotationEnabled ||
+              currentWebMode() === WEB_MODE_UPLOAD ||
+              state.deleteInFlight ||
+              state.factoryResetInFlight;
+          }
+          if (rotateButton) {
+            rotateButton.classList.toggle("soft-disabled", !!autoRotationEnabled);
+            rotateButton.setAttribute("aria-disabled", autoRotationEnabled ? "true" : "false");
+          }
+        }
+
+        function syncMenuRemoteUI() {
+          var canUse = deviceMenuContextActive();
+          var busy = currentWebMode() === WEB_MODE_UPLOAD ||
+            state.deleteInFlight ||
+            state.factoryResetInFlight;
+          var ids = ["menuUp", "menuDown", "menuConfirm"];
+          var i;
+          for (i = 0; i < ids.length; i++) {
+            var button = qs(ids[i]);
+            if (button) {
+              button.disabled = busy || !canUse;
+              button.classList.toggle("menu-remote-inactive", !canUse && !busy);
+            }
+          }
+          var menuOpenButton = qs("menuOpen");
+          if (menuOpenButton) {
+            menuOpenButton.disabled = busy;
+            menuOpenButton.classList.remove("menu-remote-inactive");
+          }
+        }
+
+        function formatRotation(value) {
+          return Number(value) === 90 ? "横向" : "纵向";
+        }
+
+        function setActiveTab(tab) {
+          var panels = document.querySelectorAll("[data-tab-panel]");
+          var buttons = document.querySelectorAll("[data-tab-target]");
+          var i;
+          var needsAlbumRefresh;
+          state.activeTab = tab || "home";
+          for (i = 0; i < panels.length; i++) {
+            var active = panels[i].getAttribute("data-tab-panel") === state.activeTab;
+            panels[i].classList.toggle("active", active);
+            panels[i].hidden = !active;
+          }
+          for (i = 0; i < buttons.length; i++) {
+            buttons[i].classList.toggle("active", buttons[i].getAttribute("data-tab-target") === state.activeTab);
+          }
+          if (window.location.hash !== "#" + state.activeTab) {
+            window.location.hash = state.activeTab;
+          }
+          needsAlbumRefresh = state.activeTab === "album" && (state.albumDirty || !state.albumLoaded);
+          if (state.activeTab === "album") {
+            state.albumThumbRetryCount = 0;
+            if (state.albumThumbRetryTimer) {
+              clearTimeout(state.albumThumbRetryTimer);
+              state.albumThumbRetryTimer = null;
+            }
+          } else if (state.activeTab === "wifi") {
+            if (!state.wifiSaved.length) {
+              refresh("wifi");
+            }
+            renderSavedWifi();
+            renderWifiScan();
+          }
+          syncWebMode(false, function() {
+            if (state.activeTab !== "album") {
+              return;
+            }
+            if (needsAlbumRefresh) {
+              refresh("media");
+            } else {
+              renderPhotos();
+            }
+          });
+          updateInteractiveState();
+          armNextStatusPoll(400);
+        }
+
+        function bindTabButtons() {
+          var buttons = document.querySelectorAll("[data-tab-target]");
+          var i;
+          for (i = 0; i < buttons.length; i++) {
+            (function(button) {
+              button.onclick = function() {
+                if (state.uploadInFlight &&
+                    button.getAttribute("data-tab-target") !== state.activeTab) {
+                  showRuntimeError("上传进行中，请等待当前批次完成后再切换页面。");
+                  return;
+                }
+                setActiveTab(button.getAttribute("data-tab-target"));
+              };
+            })(buttons[i]);
+          }
+          window.addEventListener("hashchange", function() {
+            var next = (window.location.hash || "").replace(/^#/, "");
+            if (next) {
+              setActiveTab(next);
+            }
+          });
+          window.addEventListener("popstate", function() {
+            if (state.uploadInFlight) {
+              history.pushState({ ephotoUploadGuard: true }, "", window.location.href);
+              requestAbortUpload();
+              return;
+            }
+            if (state.previewPhotoPath) {
+              closePhotoPreview(true);
+            }
+          });
+        }
+
+        function findPhotoByPath(path) {
+          var i;
+          if (!path) {
+            return null;
+          }
+          for (i = 0; i < state.photos.length; i++) {
+            if (state.photos[i].path === path) {
+              return state.photos[i];
+            }
+          }
+          return null;
+        }
+
+        function resetThumbLoader() {
+          if (state.thumbObserver) {
+            state.thumbObserver.disconnect();
+          }
+          state.thumbQueue = [];
+          state.thumbLoadCount = 0;
+          state.thumbObserver = null;
+        }
+
+        function clearAlbumThumbRetryTimer() {
+          if (state.albumThumbRetryTimer) {
+            clearTimeout(state.albumThumbRetryTimer);
+            state.albumThumbRetryTimer = null;
+          }
+        }
+
+        function countAlbumMissingThumbs() {
+          var count = 0;
+          var i;
+          for (i = 0; i < state.photos.length; i++) {
+            if (!state.photos[i].thumbnailReady && !state.photos[i].previewReady) {
+              count += 1;
+            }
+          }
+          return count;
+        }
+
+        function scheduleAlbumThumbRetry(delayMs) {
+          if (state.activeTab !== "album" || currentWebMode() !== WEB_MODE_ALBUM) {
+            return;
+          }
+          if (state.refreshInFlight || state.uploadInFlight || state.factoryResetInFlight || state.deleteInFlight) {
+            return;
+          }
+          if (state.albumThumbRetryCount >= ALBUM_THUMB_RETRY_MAX) {
+            return;
+          }
+          clearAlbumThumbRetryTimer();
+          state.albumThumbRetryTimer = setTimeout(function() {
+            state.albumThumbRetryTimer = null;
+            if (state.activeTab !== "album" || currentWebMode() !== WEB_MODE_ALBUM) {
+              return;
+            }
+            state.albumThumbRetryCount += 1;
+            state.albumDirty = true;
+            refresh("media");
+          }, typeof delayMs === "number" ? delayMs : ALBUM_THUMB_RETRY_DELAY_MS);
+        }
+
+        function completeThumbLoad(node, failed) {
+          state.thumbLoadCount = Math.max(0, state.thumbLoadCount - 1);
+          if (node) {
+            node.classList.remove("is-pending");
+            if (failed) {
+              node.classList.add("is-failed");
+              if (state.activeTab === "album" && currentWebMode() === WEB_MODE_ALBUM) {
+                scheduleAlbumThumbRetry(ALBUM_THUMB_RETRY_DELAY_MS);
+              }
+            }
+          }
+          processThumbQueue();
+        }
+
+        function enqueueThumbNode(node) {
+          if (!node || !node.getAttribute("data-thumb-src") || node.getAttribute("data-thumb-enqueued") === "1") {
+            return;
+          }
+          node.setAttribute("data-thumb-enqueued", "1");
+          if (typeof node.getBoundingClientRect === "function") {
+            var rect = node.getBoundingClientRect();
+            if (rect && rect.top < window.innerHeight * 1.35) {
+              state.thumbQueue.unshift(node);
+            } else {
+              state.thumbQueue.push(node);
+            }
+          } else {
+            state.thumbQueue.push(node);
+          }
+          processThumbQueue();
+        }
+
+        function processThumbQueue() {
+          while (!state.thumbPaused &&
+                 state.thumbLoadCount < THUMB_LOAD_CONCURRENCY &&
+                 state.thumbQueue.length) {
+            var node = state.thumbQueue.shift();
+            var src = node && node.getAttribute("data-thumb-src");
+            if (!node || !src || node.getAttribute("data-thumb-loaded") === "1") {
+              continue;
+            }
+            state.thumbLoadCount += 1;
+            node.onload = function() {
+              this.setAttribute("data-thumb-loaded", "1");
+              completeThumbLoad(this, false);
+            };
+            node.onerror = function() {
+              completeThumbLoad(this, true);
+            };
+            node.src = src;
+          }
+        }
+
+        function setupPhotoThumbLoading() {
+          var nodes = document.querySelectorAll(".photo-thumb[data-thumb-src]");
+          var i;
+          resetThumbLoader();
+          if (!nodes.length) {
+            return;
+          }
+          if ("IntersectionObserver" in window) {
+            state.thumbObserver = new IntersectionObserver(function(entries) {
+              var j;
+              for (j = 0; j < entries.length; j++) {
+                if (!entries[j].isIntersecting) {
+                  continue;
+                }
+                enqueueThumbNode(entries[j].target);
+                state.thumbObserver.unobserve(entries[j].target);
+              }
+            }, { rootMargin: "160px 0px" });
+            for (i = 0; i < nodes.length; i++) {
+              state.thumbObserver.observe(nodes[i]);
+            }
+            return;
+          }
+          for (i = 0; i < nodes.length; i++) {
+            enqueueThumbNode(nodes[i]);
+          }
+        }
+
+        function resetFailedPhotoThumbs() {
+          var nodes = document.querySelectorAll(".photo-thumb[data-thumb-src].is-failed");
+          var i;
+          for (i = 0; i < nodes.length; i++) {
+            nodes[i].removeAttribute("data-thumb-enqueued");
+            nodes[i].removeAttribute("data-thumb-loaded");
+            nodes[i].classList.remove("is-failed");
+          }
+        }
+
+        function scheduleAlbumMissingThumbRefresh() {
+          if (state.activeTab !== "album" || currentWebMode() !== WEB_MODE_ALBUM) {
+            return;
+          }
+          if (state.uploadInFlight || state.refreshInFlight || state.deleteInFlight || state.factoryResetInFlight) {
+            return;
+          }
+          if (countAlbumMissingThumbs() <= 0) {
+            state.albumThumbRetryCount = 0;
+            clearAlbumThumbRetryTimer();
+            return;
+          }
+          scheduleAlbumThumbRetry(ALBUM_THUMB_MISSING_REFRESH_DELAY_MS);
+        }
+
+        function applyPreviewRotation(url, rotationDeg) {
+          var normalizedRotation = rotationDeg === 90 ? 90 : 0;
+          if (!url) {
+            return "";
+          }
+          if (/[?&]r=\d+/.test(url)) {
+            return url.replace(/([?&])r=\d+/, "$1r=" + normalizedRotation);
+          }
+          return url + (url.indexOf("?") >= 0 ? "&" : "?") + "r=" + normalizedRotation;
+        }
+
+        function getPreviewRotationDeg() {
+          var deviceRotation = state.snapshot && state.snapshot.settings && state.snapshot.settings.rotationDeg === 90 ? 90 : 0;
+          return deviceRotation === 90 ? 0 : 90;
+        }
+
+        function getDeviceRotationDeg() {
+          return state.snapshot && state.snapshot.settings && state.snapshot.settings.rotationDeg === 90 ? 90 : 0;
+        }
+
+        function resetPhotoPreviewLayout() {
+          var viewport = qs("photoPreviewViewport");
+          var image = qs("photoPreviewModalImage");
+          var empty = qs("photoPreviewEmpty");
+          if (!viewport || !image) {
+            return;
+          }
+          viewport.style.aspectRatio = "10 / 16";
+          image.style.width = "";
+          image.style.height = "";
+          image.style.left = "";
+          image.style.top = "";
+          if (empty) {
+            empty.hidden = true;
+            empty.textContent = "";
+          }
+        }
+
+        function applyPhotoPreviewLayout(photo) {
+          var viewport = qs("photoPreviewViewport");
+          var photoWidth = photo && Number(photo.width) > 0 ? Number(photo.width) : 0;
+          var photoHeight = photo && Number(photo.height) > 0 ? Number(photo.height) : 0;
+
+          if (!viewport) {
+            return;
+          }
+
+          if (!photoWidth || !photoHeight) {
+            resetPhotoPreviewLayout();
+            return;
+          }
+
+          viewport.style.aspectRatio = photoWidth + " / " + photoHeight;
+        }
+
+        function updateCurrentPhotoPreview() {
+          var img = qs("currentPhotoPreview");
+          var empty = qs("previewEmpty");
+          var stage = img ? img.parentNode : null;
+          var currentPath = state.snapshot && state.snapshot.currentPhotoPath ? state.snapshot.currentPhotoPath : "";
+          var photo = findPhotoByPath(currentPath);
+          var deviceRotationDeg = getDeviceRotationDeg();
+          var fallbackRotationDeg = getPreviewRotationDeg();
+          var fitMode = state.snapshot && state.snapshot.settings && state.snapshot.settings.fitMode === "cover" ? "cover" : "contain";
+          var cachedPreviewSrc = state.snapshot && state.snapshot.currentPhotoPreviewUrl ? state.snapshot.currentPhotoPreviewUrl : "";
+          var nextSrc = cachedPreviewSrc ||
+                        (photo ? (photo.previewUrl || photo.thumbnailUrl || "") : "");
+          var useScreenCachePreview = !!cachedPreviewSrc;
+          // The photos endpoint is authoritative for the displayable gallery
+          // count. A preview URL without a current path is stale and must not
+          // win over the empty-gallery state either.
+          var albumTotal = Number(state.albumTotal);
+          var albumEmpty = !currentPath ||
+                           (isFinite(albumTotal) && albumTotal <= 0);
+
+          if (!img || !empty || !stage) {
+            return;
+          }
+
+          stage.classList.toggle("preview-stage-landscape", deviceRotationDeg === 90);
+          stage.classList.toggle("preview-stage-portrait", deviceRotationDeg !== 90);
+          stage.classList.toggle("preview-stage-cover", !useScreenCachePreview && fitMode === "cover");
+          stage.classList.toggle("preview-stage-contain", !useScreenCachePreview && fitMode !== "cover");
+          img.classList.toggle("preview-image-cover", !useScreenCachePreview && fitMode === "cover");
+          img.classList.toggle("preview-image-contain", !useScreenCachePreview && fitMode !== "cover");
+          img.classList.toggle("preview-image-screen-cache", useScreenCachePreview);
+          img.classList.toggle("preview-image-screen-cache-portrait", useScreenCachePreview && deviceRotationDeg !== 90);
+          img.classList.toggle("preview-image-screen-cache-landscape", useScreenCachePreview && deviceRotationDeg === 90);
+
+          if (albumEmpty) {
+            // An empty gallery must take precedence over a stale preview URL.
+            // Clear the image source as well as hiding it so the browser cannot
+            // render its broken-image placeholder from a previous refresh.
+            img.removeAttribute("src");
+            img.removeAttribute("data-preview-url");
+            img.removeAttribute("data-rotation");
+            img.hidden = true;
+            stage.classList.remove("preview-stage-cover", "preview-stage-contain");
+            empty.hidden = false;
+            empty.innerHTML = "<div class=\"preview-empty-title\">还没有可展示的照片</div><div class=\"muted\">请前往“相册”上传照片，上传完成后这里会显示电子相框正在播放的画面。</div>";
+            return;
+          }
+
+          if (!useScreenCachePreview) {
+            nextSrc = applyPreviewRotation(nextSrc, fallbackRotationDeg);
+          }
+
+          if (nextSrc) {
+            img.onerror = function() {
+              if (img.getAttribute("data-preview-url") !== nextSrc) {
+                return;
+              }
+              img.removeAttribute("src");
+              img.removeAttribute("data-preview-url");
+              img.removeAttribute("data-rotation");
+              img.hidden = true;
+              empty.hidden = false;
+              empty.innerHTML = "<div class=\"preview-empty-title\">预览暂不可用</div><div class=\"muted\">请前往相册上传照片后进行展示。</div>";
+            };
+            if (img.getAttribute("data-preview-url") !== nextSrc) {
+              img.src = nextSrc;
+              img.setAttribute("data-preview-url", nextSrc);
+            }
+            img.setAttribute("data-rotation", String(useScreenCachePreview ? deviceRotationDeg : fallbackRotationDeg));
+            img.hidden = false;
+            empty.hidden = true;
+          } else {
+            img.removeAttribute("src");
+            img.hidden = true;
+            img.removeAttribute("data-preview-url");
+            img.removeAttribute("data-rotation");
+            empty.hidden = false;
+            if (currentPath) {
+              empty.innerHTML = "<div class=\"preview-empty-title\">正在同步当前照片预览</div><div class=\"muted\">当前画面已经切换，图库数据更新后会显示缩略预览。</div>";
+            } else {
+              stage.classList.remove("preview-stage-cover", "preview-stage-contain");
+              empty.innerHTML = "<div class=\"preview-empty-title\">还没有可展示的照片</div><div class=\"muted\">请前往“相册”上传照片，上传完成后这里会显示电子相框正在播放的画面。</div>";
+            }
+          }
+        }
+
+        function renderPhotos() {
+          var container = qs("photoList");
+          var html = "";
+          var renderItems = [];
+          var i;
+          var uploadBusy = currentWebMode() === WEB_MODE_UPLOAD;
+          var renderSignature;
+          var needsDomRender;
+          syncSelectedPhotosFromGallery();
+
+          if (!container) {
+            return;
+          }
+          container.className = "photo-browser grid compact";
+
+          for (i = 0; i < state.photos.length; i++) {
+            var photo = state.photos[i];
+            var encodedPath = encodeURIComponent(photo.path);
+            var selected = !!state.selectedPhotoPaths[photo.path];
+            var thumb = photo.thumbnailUrl || photo.previewUrl || "";
+            renderItems.push([
+              photo.path || "",
+              photo.name || "",
+              thumb,
+              !!photo.thumbnailReady,
+              !!photo.previewReady,
+              !!photo.thumbnailFailed,
+              selected,
+              uploadBusy
+            ]);
+            var tileClass = "photo-tile" + (selected ? " is-selected" : "") + (photo.thumbnailReady ? "" : " is-missing-thumb");
+            var thumbHtml = photo.thumbnailReady
+              ? ("<img class=\"photo-thumb is-pending\" data-thumb-src=\"" + escapeHtml(thumb) + "\" alt=\"" + escapeHtml(photo.name) + "\" decoding=\"async\" />")
+              : ("<div class=\"photo-thumb photo-thumb-placeholder\"><strong>缓存待处理</strong><span>" +
+                 escapeHtml(photo.thumbnailFailed ? "缩略图构建失败，可点进重建" : "暂未生成缩略图") +
+                 "</span></div>");
+
+            html += "<article class=\"" + tileClass + "\">" +
+              "<label class=\"photo-pick-wrap compact\">" +
+              "<input type=\"checkbox\" class=\"photo-pick\" data-photo-pick=\"" + encodedPath + "\"" + (selected ? " checked" : "") + (uploadBusy ? " disabled" : "") + " />" +
+              "</label>" +
+              "<button class=\"photo-thumb-btn\" data-photo-preview=\"" + encodedPath + "\" title=\"" + escapeHtml(photo.name) + "\"" + (uploadBusy ? " disabled" : "") + ">" +
+              thumbHtml +
+              "</button>" +
+              "</article>";
+          }
+          renderSignature = JSON.stringify(renderItems);
+          needsDomRender = state.albumRenderSignature !== renderSignature;
+          if (needsDomRender) {
+            container.innerHTML = html || "<div class=\"photo-empty\"><span class=\"muted\">暂无照片</span></div>";
+            state.albumRenderSignature = renderSignature;
+          }
+          renderPhotoSelectionSummary();
+          renderAlbumPagination();
+          if (needsDomRender) {
+            bindPhotoSelectButtons();
+            bindDataButtons("data-photo-preview", openPhotoPreview);
+            setupPhotoThumbLoading();
+          } else if (state.albumThumbRetryCount > 0) {
+            resetFailedPhotoThumbs();
+            setupPhotoThumbLoading();
+          }
+          updateCurrentPhotoPreview();
+          scheduleAlbumMissingThumbRefresh();
+        }
+
+        function syncSelectedPhotosFromGallery() {
+          // Selections intentionally survive page changes so batch deletion can
+          // include photos chosen on more than one page.
+          if (!state.selectedPhotoPaths) {
+            state.selectedPhotoPaths = {};
+          }
+        }
+
+        function selectedPhotoPaths() {
+          var items = [];
+          for (var path in state.selectedPhotoPaths) {
+            if (state.selectedPhotoPaths.hasOwnProperty(path) && state.selectedPhotoPaths[path]) {
+              items.push(path);
+            }
+          }
+          return items;
+        }
+
+        function renderPhotoSelectionSummary() {
+          var selected = selectedPhotoPaths();
+          var total = Number(state.albumTotal || 0);
+          var pageCount = state.photos.length;
+          var text = "";
+          setText("albumPhotoCount", total);
+          setText("albumSelectedCount", selected.length);
+          if (!total) {
+            text = "当前设备里还没有可用图片。";
+          } else if (!selected.length) {
+            text = "共 " + total + " 张图片。本页显示 " + pageCount + " 张；点击图片预览，勾选左上角选择框可批量删除。";
+          } else if (selected.length === 1) {
+            text = "已选择 1 张图片，可继续翻页选择或批量删除。";
+          } else {
+            text = "已选择 " + selected.length + " / " + total + " 张图片，可批量删除。";
+          }
+          setText("photoSelectionSummary", text);
+          updateDeleteSelectedButton(selected.length);
+          updateInteractiveState();
+        }
+
+        function updateInteractiveState() {
+          var uploadBusy = currentWebMode() === WEB_MODE_UPLOAD;
+          var busy = uploadBusy || state.deleteInFlight || state.factoryResetInFlight;
+          var menuContextActive = deviceMenuContextActive();
+          var ids = [
+            "selectAllPhotos", "clearPhotoSelection", "deleteSelectedPhotos", "photoPagePrev", "photoPageNext", "photoPagePicker", "upload", "uploadBtn",
+            "prev", "next", "rotate", "fitQuick", "menuOpen", "menuUp", "menuDown", "menuConfirm",
+            "purgeCache", "rescanMedia", "factoryReset",
+            "photoPreviewShow", "photoPreviewRotate90", "photoPreviewRotate180", "photoPreviewRotate270",
+            "photoPreviewResetOrientation", "photoPreviewRebuild", "photoPreviewDelete",
+            "syncTimeNow", "otaCheckNow",
+            "connectWifi", "wifiAp", "wifiScan", "saveDeviceName",
+            "ssid", "password", "manualTime", "deviceName", "bootImageUpload", "bootImageUploadBtn", "bootImageRestoreDefault",
+            "mode", "interval", "fit", "orientation", "rotation", "brightnessMode",
+            "clockFormat", "clockPosition", "timezone", "autoTimeSync", "screenScheduleEnabled", "screenOnTime", "screenOffTime",
+            "otaInterval"
+          ];
+          var buttons = document.querySelectorAll("[data-tab-target]");
+          var i;
+          for (i = 0; i < ids.length; i++) {
+            var node = qs(ids[i]);
+            if (node) {
+              node.disabled = busy;
+            }
+          }
+          for (i = 0; i < buttons.length; i++) {
+            var isCurrent = buttons[i].getAttribute("data-tab-target") === state.activeTab;
+            buttons[i].disabled = busy && !isCurrent;
+          }
+          var ota = state.snapshot && state.snapshot.ota ? state.snapshot.ota : null;
+          var otaCheckButton = qs("otaCheckNow");
+          if (otaCheckButton) {
+            otaCheckButton.disabled = busy || !ota || ota.updating;
+            otaCheckButton.textContent = ota && ota.checking ? "检查中..." : "检查更新";
+          }
+          var menuUpButton = qs("menuUp");
+          var menuDownButton = qs("menuDown");
+          var menuConfirmButton = qs("menuConfirm");
+          if (menuUpButton) {
+            menuUpButton.disabled = busy || !menuContextActive;
+          }
+          if (menuDownButton) {
+            menuDownButton.disabled = busy || !menuContextActive;
+          }
+          if (menuConfirmButton) {
+            menuConfirmButton.disabled = busy || !menuContextActive;
+          }
+          syncBrightnessModeUI(state.snapshot && state.snapshot.settings ? state.snapshot.settings.brightnessMode : "manual",
+                               state.snapshot && state.snapshot.settings ? state.snapshot.settings : null);
+          syncScreenScheduleUI();
+          syncRotationControlUI(state.snapshot && state.snapshot.settings ? state.snapshot.settings : null);
+          syncMenuRemoteUI();
+        }
+
+        function openPhotoPreview(encodedPath) {
+          var path = decodeURIComponent(encodedPath || "");
+          var photo = findPhotoByPath(path);
+          var modal = qs("photoPreviewModal");
+          var image = qs("photoPreviewModalImage");
+          var empty = qs("photoPreviewEmpty");
+          var title = qs("photoPreviewModalTitle");
+          var orientationInfo = qs("photoPreviewOrientationInfo");
+          var rotate90Button = qs("photoPreviewRotate90");
+          var rotate180Button = qs("photoPreviewRotate180");
+          var rotate270Button = qs("photoPreviewRotate270");
+          var resetButton = qs("photoPreviewResetOrientation");
+          var src = photo && (photo.previewReady || photo.thumbnailReady) ? (photo.previewUrl || photo.thumbnailUrl || "") : "";
+          if (!modal || !image || !title || !empty || !photo) {
+            return;
+          }
+          applyPhotoPreviewLayout(photo);
+          if (src) {
+            image.src = src;
+            image.hidden = false;
+            empty.hidden = true;
+            empty.textContent = "";
+          } else {
+            image.removeAttribute("src");
+            image.hidden = true;
+            empty.hidden = false;
+            if (photo.previewFailed) {
+              empty.textContent = "这张照片的预览图缓存生成失败了。错误：" +
+                (photo.previewErrorText || "未知错误") +
+                "。可以点击下方“重建缓存”。";
+            } else if (photo.thumbnailFailed) {
+              empty.textContent = "这张照片的缩略图缓存生成失败了。错误：" +
+                (photo.thumbnailErrorText || "未知错误") +
+                "。可以点击下方“重建缓存”。";
+            } else {
+              empty.textContent = "这张照片的缩略图还没准备好，可以稍后再试，或手动点击“重建缓存”。";
+            }
+          }
+          title.textContent = photo.name || "照片预览";
+          if (orientationInfo) {
+            orientationInfo.textContent = "方向：" + formatPhotoOrientationFix(photo);
+          }
+          if (rotate90Button) {
+            rotate90Button.hidden = !photo.canAdjustOrientation;
+          }
+          if (rotate180Button) {
+            rotate180Button.hidden = !photo.canAdjustOrientation;
+          }
+          if (rotate270Button) {
+            rotate270Button.hidden = !photo.canAdjustOrientation;
+          }
+          if (resetButton) {
+            resetButton.hidden = !photo.canAdjustOrientation || !(Number(photo.manualRotationDeg || 0) > 0);
+          }
+          state.previewPhotoPath = path;
+          if (!state.previewHistoryOpen) {
+            history.pushState({ ephotoPreview: true }, "", window.location.href);
+            state.previewHistoryOpen = true;
+          }
+          setModalHidden("photoPreviewModal", false);
+        }
+
+        function closePhotoPreview(fromHistory) {
+          var modal = qs("photoPreviewModal");
+          var image = qs("photoPreviewModalImage");
+          var orientationInfo = qs("photoPreviewOrientationInfo");
+          if (!fromHistory && state.previewHistoryOpen) {
+            state.previewHistoryOpen = false;
+            history.back();
+            return;
+          }
+          if (modal) {
+            modal.hidden = true;
+          }
+          if (image) {
+            image.removeAttribute("src");
+            image.hidden = true;
+          }
+          if (orientationInfo) {
+            orientationInfo.textContent = "方向：自动";
+          }
+          state.previewPhotoPath = "";
+          state.previewHistoryOpen = false;
+          resetPhotoPreviewLayout();
+          syncModalOpenState();
+        }
+
+        function bindPhotoSelectButtons() {
+          var nodes = document.querySelectorAll("[data-photo-pick]");
+          var i;
+          for (i = 0; i < nodes.length; i++) {
+            (function(node) {
+              node.onchange = function() {
+                togglePhotoSelection(node.getAttribute("data-photo-pick"), node.checked);
+              };
+            })(nodes[i]);
+          }
+        }
+
+        function togglePhotoSelection(encodedPath, checked) {
+          var path = decodeURIComponent(encodedPath || "");
+          if (!path) {
+            return;
+          }
+          if (checked) {
+            state.selectedPhotoPaths[path] = true;
+          } else {
+            delete state.selectedPhotoPaths[path];
+          }
+          renderPhotoSelectionSummary();
+        }
+
+        function selectAllPhotos() {
+          var i;
+          for (i = 0; i < state.photos.length; i++) {
+            state.selectedPhotoPaths[state.photos[i].path] = true;
+          }
+          renderPhotos();
+        }
+
+        function clearPhotoSelection() {
+          state.selectedPhotoPaths = {};
+          renderPhotos();
+        }
+
+        function renderAlbumPagination() {
+          var pagination = qs("photoPagination");
+          var actions = qs("photoPaginationActions");
+          var previous = qs("photoPagePrev");
+          var next = qs("photoPageNext");
+          var picker = qs("photoPagePicker");
+          var total = Number(state.albumTotal || 0);
+          var offset = Number(state.albumOffset || 0);
+          var pageCount = state.photos.length;
+          var pageLimit = Number(state.albumPageLimit || 66);
+          var totalPages = pageLimit > 0 ? Math.max(1, Math.ceil(total / pageLimit)) : 1;
+          var currentPage = Math.min(totalPages, Math.max(1, Math.floor(offset / pageLimit) + 1));
+          var first = total > 0 ? offset + 1 : 0;
+          var last = total > 0 ? Math.min(total, offset + pageCount) : 0;
+          var busy = state.refreshInFlight || currentWebMode() === WEB_MODE_UPLOAD || state.deleteInFlight;
+
+          if (pagination) {
+            pagination.hidden = total <= 0;
+          }
+          if (actions) {
+            actions.hidden = totalPages <= 1;
+          }
+          if (picker && picker.options.length !== totalPages) {
+            picker.textContent = "";
+            for (var page = 1; page <= totalPages; page++) {
+              var option = document.createElement("option");
+              option.value = String(page);
+              option.textContent = "第 " + page + " / " + totalPages + " 页";
+              picker.appendChild(option);
+            }
+          }
+          if (picker) {
+            picker.value = String(currentPage);
+          }
+          if (previous) {
+            previous.disabled = busy || offset <= 0;
+          }
+          if (next) {
+            next.disabled = busy || !state.albumHasMore;
+          }
+          if (picker) {
+            picker.disabled = busy || totalPages <= 1;
+          }
+        }
+
+        function changeAlbumPage(direction) {
+          var pageLimit = Number(state.albumPageLimit || 66);
+          var nextOffset;
+          if (state.refreshInFlight || state.uploadInFlight || state.deleteInFlight || !pageLimit) {
+            return;
+          }
+          nextOffset = Number(state.albumOffset || 0) + (direction * pageLimit);
+          if (nextOffset < 0 || (direction > 0 && !state.albumHasMore)) {
+            return;
+          }
+          state.albumOffset = nextOffset;
+          refresh("media");
+        }
+
+        function jumpToAlbumPage(targetPage) {
+          var pageLimit = Number(state.albumPageLimit || 66);
+          var total = Number(state.albumTotal || 0);
+          var totalPages = pageLimit > 0 ? Math.max(1, Math.ceil(total / pageLimit)) : 1;
+          if (state.refreshInFlight || state.uploadInFlight || state.deleteInFlight ||
+              !pageLimit || !isFinite(targetPage) || targetPage < 1 || targetPage > totalPages) {
+            return;
+          }
+          var nextOffset = (Math.floor(targetPage) - 1) * pageLimit;
+          if (nextOffset === state.albumOffset) {
+            return;
+          }
+          state.albumOffset = nextOffset;
+          refresh("media");
+        }
+
+        function resetAlbumPage() {
+          state.albumOffset = 0;
+          state.albumTotal = 0;
+          state.albumHasMore = false;
+        }
+
+        function updateDeleteSelectedButton(selectedCount) {
+          var button = qs("deleteSelectedPhotos");
+          var count = Number(selectedCount || 0);
+          if (!button) {
+            return;
+          }
+          if (count <= 0) {
+            button.textContent = "批量删除";
+            return;
+          }
+          button.textContent = "批量删除 " + count + " 张";
+        }
+
+        function showPhoto(encodedPath, onSuccess) {
+          var path = decodeURIComponent(encodedPath || "");
+          if (interactionLocked()) {
+            showRuntimeError("启动缓存处理中，暂不允许切换图片");
+            return;
+          }
+          if (!path) {
+            return;
+          }
+          requestJson("POST", "/api/v1/photos/select", { path: path }, function() {
+            suspendPolling(1800);
+            scheduleRefresh("status", 180);
+            if (typeof onSuccess === "function") {
+              onSuccess();
+            }
+          }, function(error) {
+            var message = (error && error.message) || "显示图片失败";
+            var title = error && error.code === -24 ? "当前模式不支持显示这张照片" : "无法显示这张照片";
+            showRuntimeError(message);
+            showInfoDialog(title, "<div class=\"app-modal-note\">" + escapeHtml(message) + "</div>", "知道了");
+          });
+        }
+
+        function toggleQuickFit() {
+          var nextFit;
+          if (interactionLocked()) {
+            showRuntimeError("启动缓存处理中，暂不允许修改设置");
+            return;
+          }
+          nextFit = state.snapshot && state.snapshot.settings && state.snapshot.settings.fitMode === "cover"
+            ? "contain"
+            : "cover";
+          holdFormState(2400);
+          requestJson("PUT", "/api/v1/settings", { fitMode: nextFit }, function() {
+            if (state.snapshot && state.snapshot.settings) {
+              state.snapshot.settings.fitMode = nextFit;
+              applySnapshot(state.snapshot);
+            }
+            suspendPolling(1200);
+            scheduleRefresh("status", 160);
+          }, function(error) {
+            showRuntimeError((error && error.message) || "quick fit toggle failed");
+          });
+        }
+
+        function showPreviewPhoto() {
+          if (!state.previewPhotoPath) {
+            return;
+          }
+          showPhoto(encodeURIComponent(state.previewPhotoPath), function() {
+            closePhotoPreview();
+          });
+        }
+
+        function adjustPreviewPhotoOrientation(actionName, actionLabel) {
+          var photo = findPhotoByPath(state.previewPhotoPath);
+          var requestAction = actionName || "rotate_90";
+          if (interactionLocked()) {
+            showRuntimeError("启动缓存处理中，暂不允许调整照片方向");
+            return;
+          }
+          if (!state.previewPhotoPath || !photo) {
+            return;
+          }
+          if (!photo.canAdjustOrientation) {
+            showInfoDialog(
+              "暂不支持",
+              "<div class=\"app-modal-note\">当前只有 JPEG 照片支持方向修正，PNG / BMP 还不能直接在相册里修改方向。</div>",
+              "知道了"
+            );
+            return;
+          }
+          showConfirmDialog(
+            actionLabel || "调整方向",
+            "<div class=\"app-modal-note\">这会按新的方向重建这张照片的缓存。处理期间，这张照片的预览和显示可能会短暂刷新，是否继续？</div>",
+            "继续",
+            "取消",
+            function() {
+              requestJson("POST",
+                          "/api/v1/photos/orientation",
+                          { path: state.previewPhotoPath, action: requestAction },
+                          function() {
+                            suspendPolling(1800);
+                            state.albumDirty = true;
+                            closePhotoPreview();
+                            scheduleRefresh("status", 180);
+                            if (state.activeTab === "album") {
+                              scheduleRefresh("media", 260);
+                            }
+                          },
+                          function(error) {
+                            var message = (error && error.message) || "调整照片方向失败，请稍后重试。";
+                            showRuntimeError(message);
+                            showInfoDialog("调整照片方向失败",
+                                           "<div class=\"app-modal-note\">" + escapeHtml(message) + "</div>",
+                                           "知道了");
+                          });
+            }
+          );
+        }
+
+        function rotatePreviewPhoto90() {
+          adjustPreviewPhotoOrientation("rotate_90", "旋转90度");
+        }
+
+        function rotatePreviewPhoto180() {
+          adjustPreviewPhotoOrientation("rotate_180", "旋转180度");
+        }
+
+        function rotatePreviewPhoto270() {
+          adjustPreviewPhotoOrientation("rotate_270", "旋转270度");
+        }
+
+        function resetPreviewPhotoOrientation() {
+          adjustPreviewPhotoOrientation("reset", "恢复方向");
+        }
+
+        function restoreDefaultBootImage() {
+          if (interactionLocked()) {
+            showRuntimeError("启动缓存处理中，请稍后再试");
+            return;
+          }
+          showConfirmDialog(
+            "恢复默认开机画面",
+            "<div class=\"app-modal-note\">是否恢复默认开机画面？恢复后，下次启动将不再显示当前自定义图片。</div>",
+            "恢复默认",
+            "取消",
+            function() {
+              requestJson("POST", "/api/v1/boot-image/default", null, function() {
+                suspendPolling(1200);
+                scheduleRefresh("status", 180);
+                showInfoDialog("恢复成功",
+                               "<div class=\"app-modal-note\">默认开机画面已恢复，下次启动生效。</div>",
+                               "知道了");
+              }, function(error) {
+                var message = (error && error.message) || "恢复默认开机画面失败。";
+                showRuntimeError(message);
+                showInfoDialog("恢复失败",
+                               "<div class=\"app-modal-note\">" + escapeHtml(message) + "</div>",
+                               "知道了");
+              });
+            },
+            true
+          );
+        }
+
+        function uploadBootImage() {
+          var input = qs("bootImageUpload");
+          var file = input && input.files && input.files[0] ? input.files[0] : null;
+          if (!file) {
+            showRuntimeError("请先选择一张图片");
+            return;
+          }
+          if (!isSupportedUploadFile(file)) {
+            showInfoDialog("无法设置",
+                           "<div class=\"app-modal-note\">当前仅支持 JPEG / PNG / BMP 图片作为开机画面。</div>",
+                           "知道了");
+            return;
+          }
+          if (interactionLocked()) {
+            showRuntimeError("启动缓存处理中，请稍后再试");
+            return;
+          }
+
+          setTaskModal({
+            title: "正在设置开机画面",
+            percent: 10,
+            percentText: "10%",
+            text: "正在裁切并准备启动图片..."
+          });
+
+          buildBootImageBlobFromFile(file, function(blob) {
+            setTaskModal({
+              title: "正在设置开机画面",
+              percent: 55,
+              percentText: "55%",
+              text: "正在上传到设备并保存为启动图..."
+            });
+            requestBinary("POST",
+                          "/api/v1/boot-image/custom",
+                          blob,
+                          {
+                            "Content-Type": "image/jpeg",
+                            "X-Filename-B64": encodeFilenameHeader(file.name)
+                          },
+                          function() {
+                            closeTaskModal();
+                            if (input) {
+                              input.value = "";
+                            }
+                            suspendPolling(1200);
+                            scheduleRefresh("status", 180);
+                            showInfoDialog("设置成功",
+                                           "<div class=\"app-modal-note\">自定义开机画面已保存，下次启动时会优先显示这张图。</div>",
+                                           "知道了");
+                          },
+                          function(error) {
+                            closeTaskModal();
+                            var message = (error && error.message) || "设置开机画面失败，请稍后重试。";
+                            showRuntimeError(message);
+                            showInfoDialog("设置失败",
+                                           "<div class=\"app-modal-note\">" + escapeHtml(message) + "</div>",
+                                           "知道了");
+                          });
+          }, function(error) {
+            closeTaskModal();
+            showRuntimeError((error && error.message) || "启动图预处理失败");
+            showInfoDialog("处理失败",
+                           "<div class=\"app-modal-note\">无法处理这张图片，请换一张图片后重试。</div>",
+                           "知道了");
+          });
+        }
+
+        function chooseBootImageFile() {
+          var input = qs("bootImageUpload");
+          if (!input) {
+            return;
+          }
+          input.value = "";
+          input.click();
+        }
+
+        function rebuildPreviewPhoto() {
+          if (interactionLocked()) {
+            showRuntimeError("启动缓存处理中，暂不允许重建缓存");
+            return;
+          }
+          if (!state.previewPhotoPath) {
+            return;
+          }
+          showConfirmDialog(
+            "重建这张照片缓存",
+            "<div class=\"app-modal-note\">是否重建这张照片的缓存？系统会清理这张照片已有的预览和显示缓存，然后重新生成，处理期间这张照片可能会短暂无法预览。</div>",
+            "开始重建",
+            "取消",
+            function() {
+              requestJson("POST", "/api/v1/photos/rebuild", { path: state.previewPhotoPath }, function() {
+                suspendPolling(1800);
+                scheduleRefresh("status", 180);
+                state.albumDirty = true;
+                if (state.activeTab === "album") {
+                  scheduleRefresh("media", 280);
+                }
+                closePhotoPreview();
+              }, function(error) {
+                var message = (error && error.message) || "重建缓存失败，请稍后重试。";
+                showRuntimeError(message);
+                showInfoDialog("重建缓存失败", "<div class=\"app-modal-note\">" + escapeHtml(message) + "</div>", "知道了");
+              });
+            },
+            true
+          );
+        }
+
+        function confirmPurgeCache() {
+          if (currentWebMode() === WEB_MODE_UPLOAD) {
+            showRuntimeError("上传进行中，当前只保留上传链路和轻量状态控制。");
+            return;
+          }
+          if (interactionLocked()) {
+            showRuntimeError("启动缓存处理中，请稍后再试");
+            return;
+          }
+          showConfirmDialog(
+            "重建全部缓存",
+            "<div class=\"app-modal-note\">是否重建所有图片缓存？系统会先清理旧缓存，再重新生成全部缓存，这个过程通常会耗时较长。</div>",
+            "开始重建",
+            "取消",
+            function() {
+              action("cache-purge");
+            },
+            true
+          );
+        }
+
+        function confirmFactoryReset() {
+          if (currentWebMode() === WEB_MODE_UPLOAD) {
+            showRuntimeError("上传进行中，暂不允许恢复出厂设置。");
+            return;
+          }
+          if (interactionLocked()) {
+            showRuntimeError("启动缓存处理中，请稍后再试");
+            return;
+          }
+          if (state.factoryResetInFlight) {
+            showRuntimeError("恢复出厂设置正在执行，请稍候");
+            return;
+          }
+          showConfirmDialog(
+            "恢复出厂设置",
+            "<div class=\"stack dense\">" +
+              "<div class=\"app-modal-note\">此操作会快速清空存储卡中的全部用户内容，并把设备恢复到默认状态。</div>" +
+              "<div class=\"app-modal-note\">将被清空：</div>" +
+              "<div class=\"app-modal-note\">1. 全部照片、缩略图、显示缓存、方向修正记录</div>" +
+              "<div class=\"app-modal-note\">2. 已保存的 Wi‑Fi、设备名称、轮播与显示设置</div>" +
+              "<div class=\"app-modal-note\">3. OTA 状态、自定义开机画面，以及浏览器中保存的历史设备记录</div>" +
+              "<div class=\"app-modal-note\">恢复后设备会自动重启，并重新回到初始可配网状态。</div>" +
+            "</div>",
+            "继续",
+            "取消",
+            function() {
+              showConfirmDialog(
+                "二次确认",
+                "<div class=\"app-modal-note\">确认要恢复出厂设置吗？执行后无法撤销，设备会自动重启。</div>",
+                "确认恢复",
+                "返回",
+                startFactoryReset,
+                true
+              );
+            },
+            true
+          );
+        }
+
+        function startFactoryReset() {
+          state.factoryResetInFlight = true;
+          updateInteractiveState();
+          setTaskModal({
+            title: "恢复出厂设置中",
+            percent: null,
+            percentText: "处理中",
+            text: "正在清空照片、缓存、网络和自定义内容，请保持设备通电..."
+          });
+          requestJsonWithOptions(
+            "POST",
+            "/api/v1/system/factory-reset",
+            null,
+            { timeout: 45000 },
+            function(result) {
+              state.factoryResetInFlight = false;
+              clearAllDeviceHistory();
+              setTaskModal({
+                title: "恢复完成",
+                percent: 100,
+                text: "设备正在自动重启，稍后请重新连接设备。"
+              });
+              setTimeout(function() {
+                closeTaskModal();
+                showInfoDialog(
+                  "恢复完成",
+                  "<div class=\"app-modal-note\">" + escapeHtml((result && result.message) || "设备已恢复出厂设置，正在自动重启。") + "</div>",
+                  "知道了"
+                );
+              }, 1200);
+              suspendPolling(4000);
+              updateInteractiveState();
+            },
+            function(error) {
+              state.factoryResetInFlight = false;
+              closeTaskModal();
+              updateInteractiveState();
+              showInfoDialog(
+                "恢复失败",
+                "<div class=\"app-modal-note\">" + escapeHtml((error && error.message) || "恢复出厂设置失败，请稍后再试。") + "</div>",
+                "知道了"
+              );
+            }
+          );
+        }
+
+        function deleteSelectedPhotos() {
+          var items = selectedPhotoPaths();
+          if (interactionLocked()) {
+            showRuntimeError("启动缓存处理中，暂不允许删除");
+            return;
+          }
+          if (!items.length) {
+            showRuntimeError("请先选择要删除的图片");
+            return;
+          }
+          showConfirmDialog(
+            "确认删除",
+            "<div class=\"app-modal-note\">确定删除已选择的 " + items.length + " 张照片吗？系统会同时清理这些照片对应的缓存文件。</div>",
+            "确认删除",
+            "取消",
+            function() {
+              startDeletePhotos(items, "正在删除照片", true);
+            },
+            true
+          );
+        }
+
+        function deletePreviewPhoto() {
+          var targetPath = state.previewPhotoPath;
+          if (!state.previewPhotoPath) {
+            return;
+          }
+          showConfirmDialog(
+            "确认删除",
+            "<div class=\"app-modal-note\">确定删除这张照片吗？系统会同时清理这张照片对应的缓存文件。</div>",
+            "确认删除",
+            "取消",
+            function() {
+              closePhotoPreview();
+              startDeletePhotos([targetPath], "正在删除照片", false);
+            },
+            true
+          );
+        }
+
+        function startDeletePhotos(items, title, clearSelection) {
+          var requestedCount = items.length;
+          state.deleteInFlight = true;
+          updateInteractiveState();
+          setTaskModal({
+            title: title || "正在删除照片",
+            percent: null,
+            percentText: "处理中",
+            text: "正在删除照片并清理缓存，请稍候..."
+          });
+          requestJson("POST", "/api/v1/photos/delete", { items: items }, function(result) {
+            var removed = result && typeof result.code === "number" ? result.code : requestedCount;
+            var failed = Math.max(0, requestedCount - removed);
+            state.deleteInFlight = false;
+            if (clearSelection) {
+              state.selectedPhotoPaths = {};
+            }
+            suspendPolling(1500);
+            resetAlbumPage();
+            state.albumDirty = true;
+            closeTaskModal();
+            if (state.activeTab === "album") {
+              scheduleRefresh("media", 180);
+            }
+            updateInteractiveState();
+            showInfoDialog(
+              "删除完成",
+              "<div class=\"stack dense\">" +
+                "<div class=\"info-row\"><span>删除成功</span><strong>" + removed + " 张</strong></div>" +
+                "<div class=\"info-row\"><span>删除失败</span><strong>" + failed + " 张</strong></div>" +
+              "</div>",
+              "确定"
+            );
+          }, function(error) {
+            state.deleteInFlight = false;
+            closeTaskModal();
+            updateInteractiveState();
+            showRuntimeError((error && error.message) || "delete failed");
+            showInfoDialog(
+              "删除失败",
+              "<div class=\"app-modal-note\">" + escapeHtml((error && error.message) || "删除失败，请稍后再试。") + "</div>",
+              "知道了"
+            );
+          });
+        }
+
+        function renderSavedWifi() {
+          var html = "";
+          var i;
+          for (i = 0; i < state.wifiSaved.length; i++) {
+            var item = state.wifiSaved[i];
+            var currentSsid = state.snapshot && state.snapshot.currentSsid ? state.snapshot.currentSsid : "";
+            var isCurrent = item.ssid === currentSsid;
+            html += "<li>" +
+              "<strong>" + escapeHtml(item.ssid) + "</strong>" +
+              "<span class=\"wifi-status\">" + (isCurrent ? "当前" : "") + "</span>" +
+              (isCurrent ? "" : "<button class=\"alt\" data-wifi-connect=\"" + escapeHtml(item.ssid) + "\">连接</button>") +
+              "<button class=\"alt\" data-wifi-del=\"" + escapeHtml(item.ssid) + "\">删除</button>" +
+              "</li>";
+          }
+          qs("savedWifiList").innerHTML = html || "<li><span class=\"muted\">暂无已保存 Wi‑Fi</span></li>";
+          bindDataButtons("data-wifi-del", deleteWifi);
+          bindDataButtons("data-wifi-connect", connectSavedWifi);
+        }
+
+        function renderWifiScan() {
+          var html = "";
+          var i;
+          for (i = 0; i < state.wifiScan.length; i++) {
+            var item = state.wifiScan[i];
+            html += "<li>" +
+              "<div class=\"stack\">" +
+              "<strong>" + escapeHtml(item.ssid || "(hidden)") + "</strong>" +
+              "<div class=\"meta\">" +
+              "<small>RSSI " + escapeHtml(item.rssi) + "</small>" +
+              "<small>" + escapeHtml(item.authMode || "unknown") + "</small>" +
+              "</div>" +
+              "</div>" +
+              "<button class=\"alt\" data-wifi-pick=\"" + escapeHtml(item.ssid) + "\">使用</button>" +
+              "</li>";
+          }
+          qs("wifiScanList").innerHTML = html || "<li><span class=\"muted\">暂无扫描结果</span></li>";
+          bindDataButtons("data-wifi-pick", pickWifi);
+        }
+
+        function bindDataButtons(attribute, handler) {
+          var nodes = document.querySelectorAll("[" + attribute + "]");
+          var i;
+          for (i = 0; i < nodes.length; i++) {
+            (function(button) {
+              button.onclick = function() {
+                handler(button.getAttribute(attribute));
+              };
+            })(nodes[i]);
+          }
+        }
+
+        function setSelectValue(id, value) {
+          var node = qs(id);
+          if (node) {
+            node.value = value;
+          }
+        }
+
+        function setInputValue(id, value) {
+          var node = qs(id);
+          if (node) {
+            node.value = value;
+          }
+        }
+
+        function setChecked(id, checked) {
+          var node = qs(id);
+          if (node) {
+            node.checked = !!checked;
+          }
+        }
+
+        function getValue(id) {
+          var node = qs(id);
+          return node ? node.value : "";
+        }
+
+        function getChecked(id) {
+          var node = qs(id);
+          return !!(node && node.checked);
+        }
+
+        function holdFormState(ms) {
+          state.formEditUntil = Date.now() + (ms || 2500);
+        }
+
+        function formStateHeld() {
+          return Date.now() < state.formEditUntil;
+        }
+
+        function holdOtaSettingsState(ms, channel, interval) {
+          state.otaSettingsPendingUntil = Date.now() + (ms || 4000);
+          state.otaPendingInterval = interval || "";
+        }
+
+        function otaSettingsHeld() {
+          return Date.now() < (state.otaSettingsPendingUntil || 0);
+        }
+
+        function applySnapshot(snapshot) {
+          var settings;
+          var wifi;
+          var storage;
+          var clock;
+          var homeDeviceName;
+          var homeWifiName;
+
+          state.snapshot = snapshot || {};
+          settings = state.snapshot.settings || {};
+          wifi = state.snapshot.wifi || {};
+          storage = state.snapshot.storage || state.storage || {};
+          clock = state.snapshot.clock || {};
+          state.storage = storage;
+
+          homeDeviceName = (state.snapshot.deviceName || wifi.deviceName || "E-Photo").trim();
+          homeWifiName = (state.snapshot.currentSsid || wifi.currentSsid || "").trim();
+          if (homeWifiName) {
+            state.lastHomeWifiName = homeWifiName;
+          } else {
+            homeWifiName = state.lastHomeWifiName || "未连接 Wi-Fi";
+          }
+          setText("homeDeviceName", homeDeviceName || "E-Photo");
+          setText("homeWifiName", homeWifiName);
+
+          setText("networkMode", formatNetworkMode(state.snapshot.networkMode));
+          setText("currentSsid", state.snapshot.currentSsid || "-");
+          setText("systemDeviceName", state.snapshot.deviceName || wifi.deviceName || "-");
+          setText("firmwareVersion", state.snapshot.firmwareVersion || "-");
+          setText("otaCurrentVersion",
+            state.snapshot.ota && state.snapshot.ota.currentVersion
+              ? state.snapshot.ota.currentVersion
+              : (state.snapshot.firmwareVersion || "-"));
+          setText("staIp", wifi.staIp || "-");
+          setText("apIp", wifi.apIp || "-");
+          setText("accessMethod", renderAccessMethod(state.snapshot));
+          setText("accessUrl", renderAccessUrl(state.snapshot));
+          setText("accessFallback", renderAccessFallback(state.snapshot));
+          setText("accessHint", renderAccessHint(state.snapshot));
+          setText("currentPhotoName", state.snapshot.currentPhotoName || "暂无");
+          setText("currentPhotoPathLabel", state.snapshot.currentPhotoPath || "-");
+
+          if (state.snapshot.currentPhotoReady) {
+            setText("currentPhotoReady", "已显示");
+          } else if (state.snapshot.currentPhotoCached) {
+            setText("currentPhotoReady", "缓存已生成，等待装载");
+          } else {
+            setText("currentPhotoReady", "后台处理中");
+          }
+
+          setText("interactionLocked", state.snapshot.interactionLocked ? "是" : "否");
+          setText("cacheProgress", renderCacheProgress(state.snapshot));
+          setText("currentTime", state.snapshot.currentTime || "-");
+          if (clock.syncInProgress) {
+            setText("timeSyncStatus", "正在联网校时");
+          } else if (clock.timeValid) {
+            setText("timeSyncStatus", (clock.autoSyncEnabled ? "时间正常 / 自动校时已启用" : "时间正常 / 手动模式"));
+          } else {
+            setText("timeSyncStatus", "时间未校准");
+          }
+          setText("lastSyncInfo",
+            clock.lastSyncTime
+              ? (clock.lastSyncTime + (clock.lastSyncSource ? " / " + clock.lastSyncSource : ""))
+              : "暂无");
+          setText("storageMounted", storage.mounted ? "已挂载" : "未挂载");
+          setText("storageCapacity", formatStorageCapacityGb(storage.capacityBytes));
+          setText("storageUsed", formatStorageUsedPercent(storage));
+          setText("storageDiag", renderStorageDiagnostics(storage));
+
+          setText("wifiApSsid", wifi.apSsid || "-");
+          setText("wifiApPassword", wifi.apPassword || "-");
+          setText("wifiMdns", wifi.mdnsUrl || "-");
+          setText("wifiStaConnected", wifi.staConnected ? "已连接" : "未连接");
+          setText("wifiStaRssi", wifi.staConnected ? formatWifiRssi(wifi.staRssi) : "-");
+          setText("homeScreenState", settings.screenOn === false ? "已关闭" : "显示中");
+          setText("homePlaybackMode", formatPlaybackMode(settings.playbackMode || "time_asc"));
+          setText("homeInterval", formatInterval(settings.slideshowInterval || "10s"));
+          setText("homeFitMode", formatFitMode(settings.fitMode || "contain"));
+          setText("homeOrientationFilter", formatOrientationFilter(settings.orientationFilter || "all"));
+          setText("homeBrightnessLevel", formatBrightnessLevel(settings.brightnessPercent));
+          setText("homeRotationDeg", formatRotation(settings.rotationDeg));
+          setText("homeClockVisible", settings.clockVisible ? "显示中" : "已隐藏");
+          setText("otaStatus", formatOtaStage(state.snapshot.ota));
+          setText("otaAvailableVersion", state.snapshot.ota && state.snapshot.ota.availableVersion ? state.snapshot.ota.availableVersion : "-");
+          setText("otaLastChecked", state.snapshot.ota ? formatTimestampMs(state.snapshot.ota.lastCheckMs) : "暂无");
+          setHidden("otaStatusDetails", !state.otaStatusDetailsVisible);
+          setText("bootImageActiveSource",
+            state.snapshot.bootImage && state.snapshot.bootImage.activeSource === "custom"
+              ? "自定义"
+              : "默认");
+          setText("bootImageUpdatedAt",
+            state.snapshot.bootImage && state.snapshot.bootImage.updatedAtMs
+              ? formatTimestampMs(state.snapshot.bootImage.updatedAtMs)
+              : "暂无");
+
+          if (!formStateHeld()) {
+            setSelectValue("mode", settings.playbackMode || "time_asc");
+            setSelectValue("interval", settings.slideshowInterval || "10s");
+            setSelectValue("fit", settings.fitMode || "contain");
+            setSelectValue("orientation", settings.orientationFilter || "all");
+            setSelectValue("rotation", String(settings.manualRotationDeg === 90 ? 90 : 0));
+            setChecked("autoRotationEnabled", settings.autoRotationEnabled === true);
+            setSelectValue("brightnessMode", settings.brightnessMode || "manual");
+            syncBrightnessSliderUI(settings.brightnessMode === "auto" && typeof settings.manualBrightnessPercent === "number"
+              ? settings.manualBrightnessPercent
+              : settings.brightnessPercent);
+            setSelectValue("clockFormat", settings.clockFormat || "24h");
+            setSelectValue("clockPosition", settings.clockPosition || "top_right");
+            setSelectValue("clockColor", settings.clockColor || "white");
+            if (!otaSettingsHeld()) {
+              setSelectValue("otaInterval", settings.otaInterval === "6h" ? "24h" : (settings.otaInterval || "off"));
+            } else {
+              if (state.otaPendingInterval) {
+                setSelectValue("otaInterval", state.otaPendingInterval);
+              }
+            }
+            setSelectValue("timezone", settings.timezone || "CST-8");
+            setChecked("autoTimeSync", settings.autoTimeSync !== false);
+            setChecked("screenScheduleEnabled", settings.screenScheduleEnabled === true);
+            setInputValue("screenOnTime", settings.screenOnTime || "08:00");
+            setInputValue("screenOffTime", settings.screenOffTime || "23:00");
+            setInputValue("deviceName", state.snapshot.deviceName || wifi.deviceName || "");
+          }
+
+          setText("prev", "上一张");
+          setText("next", "下一张");
+          setText("fitQuick", settings.fitMode === "cover" ? "完整显示" : "裁切铺满");
+          setText("screen", settings.screenOn === false ? "开启屏幕" : "关闭屏幕");
+          setText("clock", settings.clockVisible ? "隐藏时钟" : "显示时钟");
+          syncBrightnessModeUI(settings.brightnessMode || "manual", settings);
+          syncOtaProgressDialog(state.snapshot.ota);
+          registerCurrentDevice(state.snapshot);
+          renderDeviceHistory();
+          renderWorkloadMode();
+          updateInteractiveState();
+          updateCurrentPhotoPreview();
+        }
+
+        function mergeRefreshMode(currentMode, nextMode) {
+          var rank = { status: 1, wifi: 2, media: 3 };
+          if (!currentMode) {
+            return nextMode || "status";
+          }
+          if (!nextMode) {
+            return currentMode;
+          }
+          return rank[nextMode] > rank[currentMode] ? nextMode : currentMode;
+        }
+
+        function refresh(mode) {
+          var nextSnapshot;
+          var nextPhotos;
+          var nextStorage;
+          var nextWifiSaved;
+          var nextAlbumOffset;
+          var nextAlbumTotal;
+          var nextAlbumPageLimit;
+          var nextAlbumHasMore;
+          var pending;
+          var firstError;
+          var loadedMedia = false;
+          var loadedWifi = false;
+
+          mode = mode || "status";
+          if (mode === "full") {
+            mode = state.activeTab === "album" ? "media" : (state.activeTab === "wifi" ? "wifi" : "status");
+          }
+          if (mode === "media" && currentWebMode() !== WEB_MODE_ALBUM) {
+            state.albumDirty = true;
+            return;
+          }
+          if (mode === "wifi" && currentWebMode() === WEB_MODE_UPLOAD) {
+            return;
+          }
+          if (state.refreshInFlight) {
+            state.refreshQueued = true;
+            state.refreshQueuedMode = mergeRefreshMode(state.refreshQueuedMode, mode);
+            return;
+          }
+
+          state.refreshInFlight = true;
+          nextSnapshot = state.snapshot || {};
+          nextPhotos = state.photos || [];
+          nextStorage = state.storage || {};
+          nextWifiSaved = state.wifiSaved || [];
+          nextAlbumOffset = state.albumOffset || 0;
+          nextAlbumTotal = state.albumTotal || 0;
+          nextAlbumPageLimit = state.albumPageLimit || 66;
+          nextAlbumHasMore = !!state.albumHasMore;
+          pending = 0;
+          firstError = "";
+
+          function begin() {
+            pending += 1;
+          }
+
+          function finish() {
+            pending -= 1;
+            if (pending > 0) {
+              return;
+            }
+            state.refreshInFlight = false;
+            state.snapshot = nextSnapshot;
+            state.photos = nextPhotos;
+            state.storage = nextStorage;
+            state.wifiSaved = nextWifiSaved;
+            state.albumOffset = nextAlbumOffset;
+            state.albumTotal = nextAlbumTotal;
+            state.albumPageLimit = nextAlbumPageLimit;
+            state.albumHasMore = nextAlbumHasMore;
+            if (loadedMedia) {
+              state.albumLoaded = true;
+              state.albumDirty = false;
+              if (countAlbumMissingThumbs() <= 0) {
+                state.albumThumbRetryCount = 0;
+                clearAlbumThumbRetryTimer();
+              }
+            }
+            if (loadedWifi && state.activeTab === "wifi") {
+              renderSavedWifi();
+              renderWifiScan();
+            }
+
+            applySnapshot(nextSnapshot);
+            if (mode === "media" && state.activeTab === "album") {
+              renderPhotos();
+            }
+
+            if (firstError) {
+              showRuntimeError(firstError);
+            } else {
+              showRuntimeError("");
+            }
+            if (state.activeTab === "album" &&
+                state.albumDirty &&
+                currentWebMode() === WEB_MODE_ALBUM &&
+                !nextSnapshot.cacheBuildActive) {
+              scheduleRefresh("media", 120);
+            }
+
+            armNextStatusPoll(nextSnapshot.cacheBuildActive ? 1000 : undefined);
+
+            if (state.refreshQueued) {
+              var queuedMode = state.refreshQueuedMode || "status";
+              state.refreshQueued = false;
+              state.refreshQueuedMode = "status";
+              setTimeout(function() {
+                refresh(queuedMode);
+              }, 120);
+            }
+          }
+
+          function fail(message) {
+            if (!firstError) {
+              firstError = message;
+            }
+            finish();
+          }
+
+          begin();
+          requestJson("GET", "/api/v1/status", null, function(snapshot) {
+            nextSnapshot = snapshot || {};
+            nextStorage = nextSnapshot.storage || nextStorage;
+            finish();
+          }, function(error) {
+            fail((error && error.message) || "status load failed");
+          });
+
+          // Home polling also needs the gallery list: when the device has no
+          // preview URL, it is the source for the matched thumbnail fallback
+          // and for the definitive empty-gallery state.
+          if (mode === "media" || mode === "full" || mode === "status") {
+            begin();
+            requestJson("GET", "/api/v1/photos?offset=" + encodeURIComponent(String(nextAlbumOffset)) +
+                        "&limit=" + encodeURIComponent(String(nextAlbumPageLimit)), null, function(result) {
+              nextPhotos = result && result.items ? result.items : [];
+              nextAlbumTotal = Number(result && result.total);
+              if (!isFinite(nextAlbumTotal) || nextAlbumTotal < 0) {
+                nextAlbumTotal = nextPhotos.length;
+              }
+              nextAlbumOffset = Number(result && result.offset);
+              if (!isFinite(nextAlbumOffset) || nextAlbumOffset < 0) {
+                nextAlbumOffset = 0;
+              }
+              nextAlbumPageLimit = Number(result && result.limit);
+              if (!isFinite(nextAlbumPageLimit) || nextAlbumPageLimit <= 0) {
+                nextAlbumPageLimit = 66;
+              }
+              nextAlbumHasMore = !!(result && result.hasMore);
+              loadedMedia = mode === "media" || mode === "full";
+              finish();
+            }, function(error) {
+              fail((error && error.message) || "photos load failed");
+            });
+
+            begin();
+            requestJson("GET", "/api/v1/storage", null, function(result) {
+              nextStorage = result || {};
+              finish();
+            }, function(error) {
+              fail((error && error.message) || "storage load failed");
+            });
+          }
+
+          if (mode === "wifi" || mode === "full") {
+            begin();
+            requestJson("GET", "/api/v1/wifi/saved", null, function(result) {
+              nextWifiSaved = result && result.items ? result.items : [];
+              loadedWifi = true;
+              finish();
+            }, function(error) {
+              fail((error && error.message) || "wifi list load failed");
+            });
+          }
+        }
+
+        function scheduleRefresh(mode, delayMs) {
+          var key = mode || "status";
+          var delay = delayMs || 0;
+          var dueAt = Date.now() + delay;
+          var existingTimer = state.scheduledRefreshTimers[key];
+          var existingDueAt = state.scheduledRefreshDueAt[key] || 0;
+
+          if (existingTimer && existingDueAt <= dueAt) {
+            return;
+          }
+
+          if (existingTimer) {
+            clearTimeout(existingTimer);
+          }
+
+          state.scheduledRefreshDueAt[key] = dueAt;
+          state.scheduledRefreshTimers[key] = setTimeout(function() {
+            delete state.scheduledRefreshTimers[key];
+            delete state.scheduledRefreshDueAt[key];
+            refresh(mode || "status");
+          }, delay);
+        }
+
+        function action(name) {
+          var now;
+          var optimisticApplied = false;
+          var lightweightAction = name === "brightness" || name === "clock" || name === "screen";
+          var photoAction = name === "prev" || name === "next" || name === "rotate";
+          if (currentWebMode() === WEB_MODE_UPLOAD && !lightweightAction) {
+            showRuntimeError("上传进行中，当前只保留上传链路和轻量状态控制。");
+            return;
+          }
+          if (interactionLocked()) {
+            showRuntimeError("启动缓存处理中，请稍后再试");
+            return;
+          }
+          if ((name === "prev" || name === "next") &&
+              state.snapshot &&
+              state.snapshot.menuVisible) {
+            showMenuRemoteHint();
+            return;
+          }
+          if (name === "rotate" &&
+              autoRotationEnabledNow()) {
+            showRuntimeError("已开启自动旋转，请先关闭自动旋转后再手动旋转。");
+            showInfoDialog(
+              "自动旋转已开启",
+              "<div class=\"app-modal-note\">当前设备已开启自动旋转，请先关闭自动旋转，再使用手动旋转。</div>",
+              "知道了"
+            );
+            return;
+          }
+          now = Date.now();
+          if (now < state.actionBusyUntil) {
+            return;
+          }
+          state.actionBusyUntil = now + actionCooldownMs(name);
+          suspendPolling(photoAction ? 1200 : 700);
+          if (lightweightAction) {
+            optimisticApplied = applyOptimisticAction(name);
+          }
+          requestJson("POST", "/api/v1/actions/" + name, null, function() {
+            if (name === "cache-purge" || name === "rescan-media") {
+              if (name === "rescan-media") {
+                resetAlbumPage();
+              }
+              state.albumDirty = true;
+              if (state.activeTab === "album") {
+                scheduleRefresh("media", 240);
+              }
+            } else if (name === "wifi-ap") {
+              holdFormState(3000);
+              scheduleRefresh("wifi", 1800);
+            } else {
+              scheduleRefresh("status", lightweightAction ? 40 : 120);
+            }
+          }, function(error) {
+            if (optimisticApplied) {
+              scheduleRefresh("status", 0);
+            }
+            showRuntimeError((error && error.message) || "操作失败，请稍后重试");
+          });
+        }
+
+        function saveSettings() {
+          var payload;
+          var brightnessModeValue;
+          if (interactionLocked()) {
+            showRuntimeError("启动缓存处理中，暂不允许修改设置");
+            return;
+          }
+          brightnessModeValue = getValue("brightnessMode") || "manual";
+          var otaIntervalValue = getValue("otaInterval") || "off";
+          holdFormState(3000);
+          holdOtaSettingsState(4500, "stable", otaIntervalValue);
+          payload = {
+            playbackMode: getValue("mode"),
+            slideshowInterval: getValue("interval"),
+            fitMode: getValue("fit"),
+            orientationFilter: getValue("orientation"),
+            rotationDeg: parseInt(getValue("rotation"), 10) || 0,
+            autoRotationEnabled: getChecked("autoRotationEnabled"),
+            brightnessMode: brightnessModeValue,
+            clockFormat: getValue("clockFormat") || "24h",
+            clockPosition: getValue("clockPosition") || "top_right",
+            clockColor: getValue("clockColor") || "white",
+            otaInterval: otaIntervalValue,
+            otaChannel: "stable",
+            timezone: getValue("timezone"),
+            autoTimeSync: getChecked("autoTimeSync"),
+            screenScheduleEnabled: getChecked("screenScheduleEnabled"),
+            screenOnTime: getValue("screenOnTime") || "08:00",
+            screenOffTime: getValue("screenOffTime") || "23:00"
+          };
+          if (brightnessModeValue !== "auto") {
+            payload.brightnessPercent = parseInt(getValue("brightnessLevel"), 10) || 0;
+          }
+          if (getValue("manualTime")) {
+            payload.manualTime = getValue("manualTime");
+          }
+          requestJson("PUT", "/api/v1/settings", payload, function() {
+            if (state.snapshot && state.snapshot.settings) {
+              state.snapshot.settings.otaChannel = "stable";
+              state.snapshot.settings.otaInterval = otaIntervalValue;
+            }
+            state.settingsSaveInFlight = false;
+            suspendPolling(1600);
+            scheduleRefresh("status", 180);
+            state.albumDirty = true;
+            if (state.activeTab === "album") {
+              scheduleRefresh("media", 500);
+            }
+            if (state.settingsSaveQueued) {
+              state.settingsSaveQueued = false;
+              queueAutoSaveSettings(120);
+            }
+          }, function(error) {
+            state.settingsSaveInFlight = false;
+            state.otaSettingsPendingUntil = 0;
+            state.otaPendingInterval = "";
+            state.settingsSaveQueued = false;
+            showRuntimeError((error && error.message) || "save settings failed");
+          });
+        }
+
+        function queueAutoSaveSettings(delayMs) {
+          if (state.settingsSaveTimer) {
+            clearTimeout(state.settingsSaveTimer);
+            state.settingsSaveTimer = null;
+          }
+          state.settingsSaveTimer = setTimeout(function() {
+            state.settingsSaveTimer = null;
+            if (state.settingsSaveInFlight) {
+              state.settingsSaveQueued = true;
+              return;
+            }
+            state.settingsSaveInFlight = true;
+            saveSettings();
+          }, delayMs || 220);
+        }
+
+        function syncTimeNow() {
+          if (interactionLocked()) {
+            showRuntimeError("启动缓存处理中，暂不允许校时");
+            return;
+          }
+          requestJson("PUT", "/api/v1/settings", { syncNow: true }, function() {
+            suspendPolling(1200);
+            scheduleRefresh("status", 180);
+          }, function(error) {
+            showRuntimeError((error && error.message) || "sync time failed");
+          });
+        }
+
+        function uploadPhoto() {
+          var input = qs("upload");
+          var selectedFiles = input && input.files ? Array.prototype.slice.call(input.files) : [];
+          var separated = splitUploadFiles(selectedFiles);
+          var files = separated.valid;
+          var successCount = 0;
+          var failedNames = [];
+          var failedDetails = [];
+          var batchFileCount = files.length;
+          var index = 0;
+          var currentFileProgress = 0;
+          var latestUploadedPath = "";
+          var batchFinalized = false;
+          var FILE_PROGRESS_PREPARING = 0.08;
+          var FILE_PROGRESS_UPLOADING_BASE = 0.15;
+          var FILE_PROGRESS_UPLOADING_SPAN = 0.75;
+          var uploadTrace = [];
+          var preparedItems = {};
+          var preparingItems = {};
+          var waitingPreparedIndex = -1;
+
+          if (interactionLocked()) {
+            showRuntimeError("启动缓存处理中，暂不允许上传");
+            return;
+          }
+          if (state.uploadInFlight) {
+            showUploadStatus("正在上传照片", -1, "上传还在进行中，请不要重复点击。");
+            return;
+          }
+          if (!selectedFiles.length) {
+            return;
+          }
+          if (!files.length) {
+            showInfoDialog(
+              "无法上传",
+              "<div class=\"app-modal-note\">当前仅支持 JPEG / PNG / BMP 图片。你这次选择的文件都不是受支持的图片格式，请重新选择照片后再上传。</div>",
+              "知道了"
+            );
+            return;
+          }
+          if (files.length > UPLOAD_BATCH_MAX_FILES) {
+            showInfoDialog(
+              "单次上传数量过多",
+              "<div class=\"app-modal-note\">一次最多上传 " + UPLOAD_BATCH_MAX_FILES + " 张图片。本次选择了 " + files.length + " 张可上传图片，请分批上传后再继续。</div>",
+              "知道了"
+            );
+            return;
+          }
+          if (separated.invalid.length > 0) {
+            showInfoDialog(
+              "已忽略不支持的文件",
+              "<div class=\"stack dense\">" +
+                "<div class=\"app-modal-note\">当前仅支持 JPEG / PNG / BMP 图片。以下文件不会上传：</div>" +
+                "<div class=\"app-modal-note\">" +
+                  escapeHtml(separated.invalid.slice(0, 5).map(function(file) {
+                    return file && file.name ? file.name : "未命名文件";
+                  }).join("、")) +
+                  (separated.invalid.length > 5 ? " 等" : "") +
+                "</div>" +
+                "<div class=\"app-modal-note\">确认后，系统会继续上传其余 " + files.length + " 张受支持图片。</div>" +
+              "</div>",
+              "继续上传",
+              function() {
+                beginUpload();
+              }
+            );
+            return;
+          }
+
+          beginUpload();
+
+          function beginUpload() {
+            state.uploadAbortRequested = false;
+            state.activeUploadXhrs = [];
+            setUploadUiState(true);
+            suspendPolling(10 * 60 * 1000);
+            showUploadStatus("正在上传照片", 0, formatUploadStep("准备上传", 1, files.length, files[0].name));
+            queuePrepare(0);
+            queuePrepare(1);
+            uploadNext();
+          }
+
+          function clamp01(value) {
+            if (!isFinite(value)) {
+              return 0;
+            }
+            if (value < 0) {
+              return 0;
+            }
+            if (value > 1) {
+              return 1;
+            }
+            return value;
+          }
+
+          function setCurrentProgress(value) {
+            currentFileProgress = Math.max(currentFileProgress, clamp01(value));
+            return currentFileProgress;
+          }
+
+          function getBatchPercent() {
+            if (!files.length) {
+              return 0;
+            }
+            return ((index + clamp01(currentFileProgress)) / files.length) * 100;
+          }
+
+          function showStep(step, name) {
+            var displayName = name || (files[index] && files[index].name) || "";
+            showUploadStatus("正在上传照片",
+                             getBatchPercent(),
+                             formatUploadStep(step, Math.min(index + 1, files.length), files.length, displayName));
+          }
+
+          function buildFailureSummary() {
+            if (!failedDetails.length) {
+              return "没有照片上传成功，请重试。";
+            }
+            var samples = failedDetails.slice(0, 2);
+            var summary = "没有照片上传成功：" + samples.join("；");
+            if (failedDetails.length > samples.length) {
+              summary += "；另有 " + (failedDetails.length - samples.length) + " 张失败";
+            }
+            return summary;
+          }
+
+          function recordFailure(name, message) {
+            var safeName = name || "未命名图片";
+            var safeMessage = message || "上传失败";
+            failedNames.push(safeName);
+            failedDetails.push(safeName + "（" + safeMessage + "）");
+          }
+
+          function summarizeTrace() {
+            var i;
+            var prepareMs = 0;
+            var requestMs = 0;
+            var serverTotalMs = 0;
+            var serverReceiveMs = 0;
+            var serverCommitMs = 0;
+            var optimizedCount = 0;
+            var originalBytes = 0;
+            var payloadBytes = 0;
+            var totalTransferKiBps = 0;
+            var transferSamples = 0;
+            for (i = 0; i < uploadTrace.length; i += 1) {
+              prepareMs += uploadTrace[i].prepareMs || 0;
+              requestMs += uploadTrace[i].requestMs || 0;
+              serverTotalMs += uploadTrace[i].serverTotalMs || 0;
+              serverReceiveMs += uploadTrace[i].serverReceiveMs || 0;
+              serverCommitMs += uploadTrace[i].serverCommitMs || 0;
+              originalBytes += uploadTrace[i].originalSize || 0;
+              payloadBytes += uploadTrace[i].payloadSize || 0;
+              if (uploadTrace[i].optimized) {
+                optimizedCount += 1;
+              }
+              if ((uploadTrace[i].transferKiBps || 0) > 0) {
+                totalTransferKiBps += uploadTrace[i].transferKiBps;
+                transferSamples += 1;
+              }
+            }
+            return {
+              files: batchFileCount,
+              optimizedCount: optimizedCount,
+              prepareMs: prepareMs,
+              requestMs: requestMs,
+              serverTotalMs: serverTotalMs,
+              serverReceiveMs: serverReceiveMs,
+              serverCommitMs: serverCommitMs,
+              originalBytes: originalBytes,
+              payloadBytes: payloadBytes,
+              avgTransferKiBps: transferSamples > 0 ? Math.round(totalTransferKiBps / transferSamples) : 0
+            };
+          }
+
+          function finalizeBatch() {
+            var wasAborted = !!state.uploadAbortRequested;
+
+            function finishUi() {
+              if (input) {
+                input.value = "";
+              }
+              resumePolling();
+              setUploadUiState(false);
+              closeTaskModal();
+            }
+
+            if (batchFinalized) {
+              return;
+            }
+            batchFinalized = true;
+
+            if (successCount > 0) {
+              requestJson("POST", "/api/v1/photos/finalize-upload", {
+                latestPath: latestUploadedPath,
+                uploadedCount: successCount
+              }, function() {
+                var traceSummary = summarizeTrace();
+                var reportTitle = wasAborted ? "上传已终止" : "上传完成";
+                finishUi();
+                showUploadReport({
+                  dialogTitle: reportTitle,
+                  files: traceSummary.files,
+                  successCount: successCount,
+                  failedCount: failedNames.length,
+                  optimizedCount: traceSummary.optimizedCount,
+                  prepareMs: traceSummary.prepareMs,
+                  requestMs: traceSummary.requestMs,
+                  serverReceiveMs: traceSummary.serverReceiveMs,
+                  serverCommitMs: traceSummary.serverCommitMs,
+                  originalBytes: traceSummary.originalBytes,
+                  payloadBytes: traceSummary.payloadBytes,
+                  avgTransferKiBps: traceSummary.avgTransferKiBps
+                });
+                if (window.console && console.table) {
+                  console.table(uploadTrace);
+                }
+                suspendPolling(2000);
+                resetAlbumPage();
+                state.albumDirty = true;
+                if (state.activeTab === "album") {
+                  scheduleRefresh("media", 240);
+                }
+              }, function(error) {
+                finishUi();
+                showRuntimeError((error && error.message) || "finalize upload failed");
+                showInfoDialog(
+                  wasAborted ? "上传已终止" : "上传完成",
+                  "<div class=\"app-modal-note\">照片已上传，但整理缓存任务启动失败，请稍后手动重建缓存。</div>",
+                  "知道了"
+                );
+                suspendPolling(1200);
+                resetAlbumPage();
+                state.albumDirty = true;
+                if (state.activeTab === "album") {
+                  scheduleRefresh("media", 240);
+                }
+              });
+            } else {
+              finishUi();
+              showRuntimeError(failedDetails[0] || (wasAborted ? "upload aborted" : "upload failed"));
+              showInfoDialog(
+                wasAborted ? "上传已终止" : "上传失败",
+                "<div class=\"app-modal-note\">" + escapeHtml(wasAborted ? "上传已被终止，没有新的照片完成上传。" : buildFailureSummary()) + "</div>",
+                "知道了"
+              );
+            }
+          }
+
+          function queuePrepare(targetIndex) {
+            var file;
+            if (targetIndex < 0 || targetIndex >= files.length || preparedItems[targetIndex] || preparingItems[targetIndex]) {
+              return;
+            }
+            file = files[targetIndex];
+            if (!file) {
+              return;
+            }
+            preparingItems[targetIndex] = true;
+            prepareUploadItem(file, function(item) {
+              if (state.uploadAbortRequested) {
+                delete preparingItems[targetIndex];
+                if (waitingPreparedIndex === targetIndex) {
+                  waitingPreparedIndex = -1;
+                  finalizeBatch();
+                }
+                return;
+              }
+              preparedItems[targetIndex] = item;
+              delete preparingItems[targetIndex];
+              if (waitingPreparedIndex === targetIndex) {
+                waitingPreparedIndex = -1;
+                uploadNext();
+              }
+            });
+          }
+
+          function sendUploadItem(file, item, retryOriginalOnFailure) {
+            var xhr = new XMLHttpRequest();
+            var requestStartedAt = window.performance && performance.now ? performance.now() : Date.now();
+            var trace = {
+              name: item.displayName,
+              uploadName: item.name,
+              originalSize: item.originalSize || Number(file && file.size) || 0,
+              payloadSize: Number(item.size) || 0,
+              optimized: !!item.optimized,
+              prepareMs: item.prepareMs || 0,
+              prepareMode: item.prepareMode || "original",
+              requestMs: 0,
+              serverTotalMs: 0,
+              serverReceiveMs: 0,
+              serverCommitMs: 0,
+              serverQueueMs: 0,
+              transferKiBps: 0,
+              completed: false
+            };
+            uploadTrace.push(trace);
+            state.activeUploadXhrs.push(xhr);
+            xhr.open("POST", "/api/v1/photos/upload", true);
+            xhr.setRequestHeader("X-Filename-B64", encodeFilenameHeader(item.name));
+            xhr.setRequestHeader("X-Defer-Cache", "1");
+            xhr.upload.onprogress = function(event) {
+              var prefix = item.optimized ? "正在上传(已优化)" : "正在上传";
+              var currentLoaded = event.lengthComputable ? event.loaded : 0;
+              var totalSize = Number(item.size) || 0;
+              if (totalSize > 0) {
+                setCurrentProgress(FILE_PROGRESS_UPLOADING_BASE +
+                                   (currentLoaded / totalSize) * FILE_PROGRESS_UPLOADING_SPAN);
+              } else {
+                setCurrentProgress(FILE_PROGRESS_UPLOADING_BASE);
+              }
+              showStep(prefix, item.displayName);
+            };
+            xhr.upload.onload = function() {
+              setCurrentProgress(FILE_PROGRESS_UPLOADING_BASE + FILE_PROGRESS_UPLOADING_SPAN);
+              showStep("设备正在保存", item.displayName);
+            };
+            xhr.onreadystatechange = function() {
+              var result;
+              var errorMessage;
+              var xhrIndex;
+              if (xhr.readyState !== 4) {
+                return;
+              }
+              xhrIndex = state.activeUploadXhrs.indexOf(xhr);
+              if (xhrIndex >= 0) {
+                state.activeUploadXhrs.splice(xhrIndex, 1);
+              }
+              try {
+                result = xhr.responseText ? JSON.parse(xhr.responseText) : {};
+              } catch (e) {
+                result = { ok: false, message: "设备返回了无法识别的数据，请稍后重试" };
+              }
+              errorMessage = result && result.message ? result.message : ("HTTP " + xhr.status);
+              trace.requestMs = Math.max(0, Math.round((window.performance && performance.now ? performance.now() : Date.now()) - requestStartedAt));
+              if (result && result.profile) {
+                trace.serverTotalMs = Number(result.profile.totalMs) || 0;
+                trace.serverReceiveMs = Number(result.profile.receiveMs) || 0;
+                trace.serverCommitMs = Number(result.profile.commitMs) || 0;
+                trace.serverQueueMs = Number(result.profile.queueMs) || 0;
+                trace.transferKiBps = Number(result.profile.transferKiBps) || 0;
+              }
+              trace.completed = true;
+
+              if (state.uploadAbortRequested) {
+                finalizeBatch();
+                return;
+              }
+
+              if (xhr.status >= 200 && xhr.status < 300) {
+                latestUploadedPath = result && result.profile && result.profile.savedPath ? result.profile.savedPath : latestUploadedPath;
+                setCurrentProgress(1);
+                successCount += 1;
+                index += 1;
+                currentFileProgress = 0;
+                if (index < files.length) {
+                  showStep("准备上传", files[index].name);
+                }
+                uploadNext();
+                return;
+              }
+
+              if (retryOriginalOnFailure) {
+                showStep("优化上传失败，回退原图", file.name);
+                sendUploadItem(file, createUploadItem(file, file, file.name, false), false);
+                return;
+              }
+
+              setCurrentProgress(1);
+              recordFailure(item.displayName, errorMessage);
+              index += 1;
+              currentFileProgress = 0;
+              uploadNext();
+            };
+            xhr.onerror = function() {
+              var xhrIndex = state.activeUploadXhrs.indexOf(xhr);
+              if (xhrIndex >= 0) {
+                state.activeUploadXhrs.splice(xhrIndex, 1);
+              }
+              trace.requestMs = Math.max(0, Math.round((window.performance && performance.now ? performance.now() : Date.now()) - requestStartedAt));
+              trace.completed = true;
+              if (state.uploadAbortRequested) {
+                finalizeBatch();
+                return;
+              }
+              if (retryOriginalOnFailure) {
+                showStep("优化上传异常，回退原图", file.name);
+                sendUploadItem(file, createUploadItem(file, file, file.name, false), false);
+                return;
+              }
+
+              setCurrentProgress(1);
+              recordFailure(item.displayName, "网络连接中断");
+              index += 1;
+              currentFileProgress = 0;
+              uploadNext();
+            };
+            xhr.send(item.payload);
+          }
+
+          function uploadNext() {
+            var file;
+            var item;
+            if (state.uploadAbortRequested) {
+              finalizeBatch();
+              return;
+            }
+            if (index >= files.length) {
+              finalizeBatch();
+              return;
+            }
+
+            file = files[index];
+            currentFileProgress = 0;
+            setCurrentProgress(FILE_PROGRESS_PREPARING);
+            showStep("正在优化", file.name);
+            queuePrepare(index);
+            queuePrepare(index + 1);
+            item = preparedItems[index];
+            if (!item) {
+              waitingPreparedIndex = index;
+              return;
+            }
+
+            delete preparedItems[index];
+            waitingPreparedIndex = -1;
+            if ((item.prepareMs || 0) > 0) {
+              showUploadStatus("正在上传照片",
+                               getBatchPercent(),
+                               formatUploadStep("预处理完成(" + Math.round(item.prepareMs / 1000) + "s)", Math.min(index + 1, files.length), files.length, file.name));
+            }
+            sendUploadItem(file, item, item.optimized);
+          }
+
+        }
+
+        function connectWifi() {
+          var payload;
+          if (interactionLocked()) {
+            showRuntimeError("启动缓存处理中，暂不允许 Wi-Fi 操作");
+            return;
+          }
+          holdFormState(3000);
+          payload = {
+            ssid: getValue("ssid"),
+            password: getValue("password")
+          };
+          requestWifiConnection(payload.ssid, payload);
+        }
+
+        function connectSavedWifi(ssid) {
+          if (!ssid || interactionLocked()) {
+            return;
+          }
+          holdFormState(3000);
+          setInputValue("ssid", ssid);
+          setInputValue("password", "");
+          requestWifiConnection(ssid, { ssid: ssid });
+        }
+
+        function requestWifiConnection(ssid, payload) {
+          showInfoDialog(
+            "正在切换 Wi-Fi",
+            "<div class=\"app-modal-note\">正在连接 <strong>" + escapeHtml(ssid || "目标网络") + "</strong>，设备网络会短暂中断，请稍候。</div>",
+            "知道了"
+          );
+          requestJson("POST", "/api/v1/wifi/connect", payload, function() {
+            suspendPolling(2500);
+            scheduleRefresh("full", 2200);
+            showInfoDialog(
+              "Wi-Fi 切换已开始",
+              "<div class=\"app-modal-note\">设备正在连接 <strong>" + escapeHtml(ssid || "目标网络") + "</strong>。网络恢复后页面会自动刷新。</div>",
+              "知道了"
+            );
+          }, function(error) {
+            var message = (error && error.message) || "Wi-Fi 切换失败，请检查密码后重试";
+            showRuntimeError(message);
+            showInfoDialog(
+              "Wi-Fi 切换失败",
+              "<div class=\"app-modal-note\">" + escapeHtml(message) + "</div>",
+              "知道了"
+            );
+          });
+        }
+
+        function deleteWifi(ssid) {
+          if (interactionLocked()) {
+            showRuntimeError("启动缓存处理中，暂不允许 Wi-Fi 操作");
+            return;
+          }
+          requestJson("DELETE", "/api/v1/wifi/" + encodeURIComponent(ssid), null, function() {
+            suspendPolling(1200);
+            scheduleRefresh("wifi", 180);
+          }, function(error) {
+            showRuntimeError((error && error.message) || "delete wifi failed");
+          });
+        }
+
+        function pickWifi(ssid) {
+          var passwordInput;
+          if (ssid) {
+            holdFormState(3000);
+            setInputValue("ssid", ssid);
+            passwordInput = qs("password");
+            if (passwordInput) {
+              passwordInput.scrollIntoView({ behavior: "smooth", block: "center" });
+              setTimeout(function() {
+                passwordInput.focus();
+              }, 220);
+            }
+          }
+        }
+
+        function scanWifi() {
+          if (interactionLocked()) {
+            showRuntimeError("启动缓存处理中，暂不允许 Wi-Fi 操作");
+            return;
+          }
+          requestJson("GET", "/api/v1/wifi/scan", null, function(result) {
+            state.wifiScan = result && result.items ? result.items : [];
+            renderWifiScan();
+          }, function(error) {
+            showRuntimeError((error && error.message) || "scan wifi failed");
+          });
+        }
+
+        function startPolling() {
+          if (state.refreshTimer) {
+            clearInterval(state.refreshTimer);
+          }
+          state.refreshTimer = setInterval(function() {
+            if (document.hidden || Date.now() < state.pollSuspendUntil) {
+              return;
+            }
+            if (currentWebMode() === WEB_MODE_UPLOAD) {
+              return;
+            }
+            if (state.nextStatusPollAt > 0 && Date.now() >= state.nextStatusPollAt) {
+              refresh("status");
+            }
+          }, 1000);
+        }
+
+        function bind() {
+          var formIds;
+          var autoSaveIds;
+          var i;
+          var initialTab = (window.location.hash || "").replace(/^#/, "") || state.activeTab;
+          loadDeviceHistory();
+          bindTabButtons();
+          bindClick("prev", function() { action("prev"); });
+          bindClick("next", function() { action("next"); });
+          bindClick("rotate", function() { action("rotate"); });
+          bindClick("fitQuick", toggleQuickFit);
+          bindClick("screen", function() { action("screen"); });
+          bindEvent("brightnessLevel", "input", function() {
+            applyBrightnessValue(getValue("brightnessLevel"), false);
+          });
+          bindEvent("brightnessLevel", "change", function() {
+            applyBrightnessValue(getValue("brightnessLevel"), true);
+          });
+          bindEvent("brightnessMode", "change", function() {
+            holdFormState(4000);
+            syncBrightnessModeUI(getValue("brightnessMode"), state.snapshot && state.snapshot.settings ? state.snapshot.settings : null);
+            queueAutoSaveSettings(120);
+          });
+          bindEvent("autoRotationEnabled", "change", function() {
+            holdFormState(4000);
+            syncRotationControlUI(null);
+            queueAutoSaveSettings(120);
+          });
+          bindEvent("screenScheduleEnabled", "change", function() {
+            holdFormState(4000);
+            syncScreenScheduleUI();
+            queueAutoSaveSettings(120);
+          });
+          bindClick("clock", function() { action("clock"); });
+          bindClick("menuOpen", function() { action("hw-confirm"); });
+          bindClick("menuUp", function() { action("hw-prev"); });
+          bindClick("menuDown", function() { action("hw-next"); });
+          bindClick("menuConfirm", function() { action("hw-rotate"); });
+          bindClick("purgeCache", confirmPurgeCache);
+          bindClick("rescanMedia", function() { action("rescan-media"); });
+          bindClick("factoryReset", confirmFactoryReset);
+          bindClick("uploadBtn", uploadPhoto);
+          bindClick("selectAllPhotos", selectAllPhotos);
+          bindClick("clearPhotoSelection", clearPhotoSelection);
+          bindClick("deleteSelectedPhotos", deleteSelectedPhotos);
+          bindClick("photoPagePrev", function() { changeAlbumPage(-1); });
+          bindClick("photoPageNext", function() { changeAlbumPage(1); });
+          bindEvent("photoPagePicker", "change", function(event) {
+            jumpToAlbumPage(event && event.target ? Number(event.target.value) : 0);
+          });
+          bindClick("photoPreviewShow", showPreviewPhoto);
+          bindClick("photoPreviewRotate90", rotatePreviewPhoto90);
+          bindClick("photoPreviewRotate180", rotatePreviewPhoto180);
+          bindClick("photoPreviewRotate270", rotatePreviewPhoto270);
+          bindClick("photoPreviewResetOrientation", resetPreviewPhotoOrientation);
+          bindClick("photoPreviewRebuild", rebuildPreviewPhoto);
+          bindClick("photoPreviewDelete", deletePreviewPhoto);
+          bindClick("bootImageUploadBtn", chooseBootImageFile);
+          bindClick("bootImageRestoreDefault", restoreDefaultBootImage);
+          bindEvent("bootImageUpload", "change", function(event) {
+            var file = event && event.target && event.target.files && event.target.files[0]
+              ? event.target.files[0]
+              : null;
+            if (!file) {
+              return;
+            }
+            uploadBootImage();
+          });
+          bindClick("connectWifi", connectWifi);
+          bindClick("saveDeviceName", saveDeviceName);
+          bindClick("wifiAp", function() { action("wifi-ap"); });
+          bindClick("wifiScan", scanWifi);
+          bindClick("syncTimeNow", syncTimeNow);
+          bindClick("otaCheckNow", function(event) {
+            if (event && typeof event.preventDefault === "function") {
+              event.preventDefault();
+            }
+            return false;
+          });
+          bindEvent("otaCheckNow", "mousedown", function(event) {
+            if (event && event.button !== 0) {
+              return;
+            }
+            if (shouldSuppressOtaCheckMouse()) {
+              return;
+            }
+            beginOtaCheckPress();
+          });
+          bindEvent("otaCheckNow", "mouseup", function() {
+            if (shouldSuppressOtaCheckMouse()) {
+              return;
+            }
+            endOtaCheckPress();
+          });
+          bindEvent("otaCheckNow", "mouseleave", function() {
+            if (shouldSuppressOtaCheckMouse()) {
+              return;
+            }
+            clearOtaCheckPress();
+            state.otaCheckLongPressTriggered = false;
+          });
+          bindEvent("otaCheckNow", "touchstart", function(event) {
+            if (event && typeof event.preventDefault === "function") {
+              event.preventDefault();
+            }
+            state.otaCheckTouchActive = true;
+            state.otaCheckSuppressMouseUntil = Date.now() + 1200;
+            beginOtaCheckPress();
+          }, { passive: false });
+          bindEvent("otaCheckNow", "touchend", function(event) {
+            if (event && typeof event.preventDefault === "function") {
+              event.preventDefault();
+            }
+            state.otaCheckSuppressMouseUntil = Date.now() + 1200;
+            if (!state.otaCheckTouchActive) {
+              return;
+            }
+            state.otaCheckTouchActive = false;
+            endOtaCheckPress();
+          }, { passive: false });
+          bindEvent("otaCheckNow", "touchcancel", function() {
+            state.otaCheckTouchActive = false;
+            state.otaCheckSuppressMouseUntil = Date.now() + 1200;
+            clearOtaCheckPress();
+            state.otaCheckLongPressTriggered = false;
+          });
+          bindEvent("otaCheckNow", "contextmenu", function(event) {
+            if (event && typeof event.preventDefault === "function") {
+              event.preventDefault();
+            }
+          });
+          bindClick("photoPreviewClose", closePhotoPreview);
+          bindClick("taskModalSecondary", requestAbortUpload);
+          bindClick("taskModalPrimary", closeTaskModal);
+          bindEvent("upload", "change", handleUploadSelection);
+          bindClick("dialogModalSecondary", function() {
+            var config = state.dialogConfig;
+            closeDialogModal();
+            if (config && typeof config.onSecondary === "function") {
+              config.onSecondary();
+            }
+          });
+          bindClick("dialogModalPrimary", function() {
+            var config = state.dialogConfig;
+            closeDialogModal();
+            if (config && typeof config.onPrimary === "function") {
+              config.onPrimary();
+            }
+          });
+          bindClick("dialogModal", function(event) {
+            if (event.target === qs("dialogModal")) {
+              closeDialogModal();
+            }
+          });
+          bindClick("photoPreviewModal", function(event) {
+            if (event.target === qs("photoPreviewModal")) {
+              closePhotoPreview();
+            }
+          });
+          document.addEventListener("keydown", function(event) {
+            if (event.key === "Escape") {
+              if (qs("dialogModal") && !qs("dialogModal").hidden) {
+                closeDialogModal();
+              } else {
+                closePhotoPreview();
+              }
+            }
+          });
+          document.addEventListener("visibilitychange", function() {
+            // Browsers commonly release Wake Lock after a page is hidden.
+            // Reacquire it when the user returns while a batch is still active.
+            if (!document.hidden && state.uploadInFlight) {
+              requestUploadWakeLock();
+            }
+          });
+
+          formIds = ["mode", "interval", "fit", "orientation", "rotation", "autoRotationEnabled", "brightnessMode", "brightnessLevel",
+            "clockFormat", "clockPosition", "clockColor", "timezone", "autoTimeSync", "screenScheduleEnabled", "screenOnTime", "screenOffTime",
+            "manualTime", "deviceName", "otaInterval", "ssid", "password"];
+          autoSaveIds = {
+            mode: true,
+            interval: true,
+            fit: true,
+            orientation: true,
+            rotation: true,
+            autoRotationEnabled: true,
+            brightnessMode: true,
+            clockFormat: true,
+            clockPosition: true,
+            clockColor: true,
+            timezone: true,
+            autoTimeSync: true,
+            screenScheduleEnabled: true,
+            screenOnTime: true,
+            screenOffTime: true,
+            otaInterval: true
+          };
+          for (i = 0; i < formIds.length; i++) {
+            (function(id) {
+              var node = qs(id);
+              if (!node) {
+                return;
+              }
+              node.addEventListener("focus", function() { holdFormState(4000); });
+              node.addEventListener("change", function() {
+                holdFormState(4000);
+                if (autoSaveIds[id]) {
+                  queueAutoSaveSettings(180);
+                }
+              });
+              node.addEventListener("input", function() { holdFormState(4000); });
+              node.addEventListener("touchstart", function() { holdFormState(4000); }, { passive: true });
+            })(formIds[i]);
+          }
+
+          document.addEventListener("visibilitychange", function() {
+            if (!document.hidden) {
+              syncWebMode(true);
+              armNextStatusPoll(80);
+              refresh(state.activeTab === "album" ? "media" : (state.activeTab === "wifi" ? "wifi" : "status"));
+            }
+          });
+          window.addEventListener("beforeunload", function(event) {
+            if (!state.uploadInFlight) {
+              return;
+            }
+            event.preventDefault();
+            event.returnValue = "";
+          });
+
+          document.addEventListener("gesturestart", function(event) {
+            event.preventDefault();
+          });
+          document.addEventListener("gesturechange", function(event) {
+            event.preventDefault();
+          });
+          document.addEventListener("touchmove", function(event) {
+            if (event.touches && event.touches.length > 1) {
+              event.preventDefault();
+            }
+          }, { passive: false });
+
+          setModalHidden("taskModal", true);
+          setModalHidden("dialogModal", true);
+          updateUploadFileSummary();
+          setActiveTab(initialTab);
+        }
+
+        try {
+          bind();
+          syncWebMode(true);
+          refresh("status");
+          armNextStatusPoll();
+          startPolling();
+          window.__EPHOTO_APP_BOOTED__ = true;
+        } catch (e) {
+          showBootError(e && e.stack ? e.stack : String(e));
+        }
+      })();
+    </script>
+  </body>
+</html>
