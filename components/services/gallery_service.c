@@ -30,6 +30,14 @@ static size_t s_unsupported_other_count;
 #define PHOTO_SNIFF_HEADER_SIZE 4096
 #define PHOTO_ORIENTATION_AUTO  0U
 
+// Bounded prefix of an APP1/Exif segment that is read to find the Orientation
+// tag.  The tag lives in IFD0, which the TIFF header points at right after its
+// own 8 bytes, so a few KiB covers even an unusually large IFD0.  Matching the
+// legacy header window keeps the per-photo allocation unchanged.
+#define JPEG_EXIF_PARSE_WINDOW     4096U
+// "Exif\0\0" plus an 8 byte TIFF header is the smallest parsable segment.
+#define JPEG_EXIF_PARSE_WINDOW_MIN 14U
+
 static bool is_jpeg_file(const char *name);
 
 typedef struct {
@@ -82,13 +90,25 @@ static uint16_t normalize_rotation_deg(int rotation_deg)
     }
 }
 
+// EXIF orientation tag values 1..8 describe how the stored pixels map onto the
+// intended display.  Four of them also involve a mirror flip, which this device
+// cannot perform (the render plan only supports rotation), so we return the
+// rotation component of each transform and accept that the mirrored cases stay
+// flipped:
+//   2 = flip_h(S)                        -> rotation 0
+//   4 = flip_v(S) = rotate180(flip_h(S)) -> rotation 180
+//   5 = transpose(S) = rotate90CW+flip_h -> rotation 90
+//   7 = transverse(S) = rotate270+flip_h -> rotation 270
 static uint16_t exif_orientation_to_rotation_deg(uint16_t exif_orientation)
 {
     switch (exif_orientation) {
     case 3:
+    case 4:
         return 180;
+    case 5:
     case 6:
         return 90;
+    case 7:
     case 8:
         return 270;
     default:
@@ -480,60 +500,111 @@ static bool sniff_bmp_dimensions(const uint8_t *header, size_t bytes_read, ephot
     return true;
 }
 
-static bool sniff_jpeg_dimensions(const uint8_t *header, size_t bytes_read, ephoto_photo_t *item)
+static bool is_jpeg_sof_marker(uint8_t marker)
 {
-    if (!header || !item || bytes_read < 4) {
+    // Start-of-frame markers, excluding DHT (C4), JPG (C8) and DAC (CC).
+    return (marker >= 0xC0 && marker <= 0xC3) ||
+           (marker >= 0xC5 && marker <= 0xC7) ||
+           (marker >= 0xC9 && marker <= 0xCB) ||
+           (marker >= 0xCD && marker <= 0xCF);
+}
+
+// Streams through the JPEG marker structure instead of working from a fixed
+// header window.  Camera JPEGs routinely carry an APP1/Exif segment far larger
+// than any practical window (it holds an embedded thumbnail plus vendor
+// makernote), and preceding segments such as APP2/ICC_PROFILE can be just as
+// large; a windowed scan that gives up once a segment does not fit would lose
+// both the orientation tag and the dimensions.  Only the marker header (2-4
+// bytes) and the SOF payload prefix are required to stay resident, and the
+// Exif segment is parsed from a bounded prefix because the Orientation tag
+// lives in IFD0, which sits at the very start of the TIFF structure.
+static bool sniff_jpeg_stream(FILE *file, ephoto_photo_t *item)
+{
+    uint8_t magic[2];
+    if (fread(magic, 1, sizeof(magic), file) != sizeof(magic)) {
         return false;
     }
-    if (!(header[0] == 0xFF && header[1] == 0xD8)) {
+    if (magic[0] != 0xFF || magic[1] != 0xD8) {
         return false;
     }
 
-    size_t pos = 2;
+    // Keep the first Exif APP1 and ignore later ones: cameras such as iPhone
+    // emit APP1(Exif) followed by APP1(XMP), and an XMP segment would otherwise
+    // overwrite an orientation that was already resolved.
+    bool exif_seen = false;
     uint16_t exif_orientation = 1;
-    while (pos + 3 < bytes_read) {
-        while (pos < bytes_read && header[pos] == 0xFF) {
-            ++pos;
-        }
-        if (pos >= bytes_read) {
-            break;
-        }
 
-        uint8_t marker = header[pos++];
-        if (marker == 0xD9 || marker == 0xDA) {
-            break;
-        }
-        if (pos + 2 > bytes_read) {
-            break;
-        }
-
-        uint16_t segment_len = read_be16(&header[pos]);
-        pos += 2;
-        if (segment_len < 2 || pos + segment_len - 2 > bytes_read) {
-            break;
-        }
-
-        if (marker == 0xE1 && segment_len > 8) {
-            exif_orientation = sniff_jpeg_exif_orientation(&header[pos], segment_len - 2);
-        }
-
-        if ((marker >= 0xC0 && marker <= 0xC3) ||
-            (marker >= 0xC5 && marker <= 0xC7) ||
-            (marker >= 0xC9 && marker <= 0xCB) ||
-            (marker >= 0xCD && marker <= 0xCF)) {
-            if (segment_len >= 7) {
-                item->raw_height = read_be16(&header[pos + 1]);
-                item->raw_width = read_be16(&header[pos + 3]);
-                item->exif_orientation = exif_orientation;
-                return true;
+    for (;;) {
+        int marker = -1;
+        for (;;) {
+            int byte = fgetc(file);
+            if (byte == EOF) {
+                return false;
             }
+            if (byte == 0xFF) {
+                continue;  // fill byte
+            }
+            marker = byte;
             break;
         }
 
-        pos += segment_len - 2;
-    }
+        // Markers without a length field.  SOS starts the entropy-coded data,
+        // so nothing past it is useful here.
+        if (marker == 0x01 || marker == 0xD9 || marker == 0xDA ||
+            (marker >= 0xD0 && marker <= 0xD7)) {
+            return false;
+        }
 
-    return false;
+        uint8_t len_bytes[2];
+        if (fread(len_bytes, 1, sizeof(len_bytes), file) != sizeof(len_bytes)) {
+            return false;
+        }
+        uint32_t segment_len = read_be16(len_bytes);
+        if (segment_len < 2) {
+            return false;
+        }
+        uint32_t payload_len = segment_len - 2U;
+
+        if (is_jpeg_sof_marker((uint8_t)marker)) {
+            uint8_t sof[5];  // precision, height(2), width(2)
+            if (payload_len < sizeof(sof) ||
+                fread(sof, 1, sizeof(sof), file) != sizeof(sof)) {
+                return false;
+            }
+            item->raw_height = read_be16(&sof[1]);
+            item->raw_width = read_be16(&sof[3]);
+            item->exif_orientation = exif_orientation;
+            return true;
+        }
+
+        if (marker == 0xE1 && !exif_seen && payload_len >= JPEG_EXIF_PARSE_WINDOW_MIN) {
+            size_t chunk = (payload_len < JPEG_EXIF_PARSE_WINDOW)
+                               ? (size_t)payload_len
+                               : (size_t)JPEG_EXIF_PARSE_WINDOW;
+            uint8_t *segment = malloc(chunk);
+            if (!segment) {
+                return false;
+            }
+            bool read_ok = fread(segment, 1, chunk, file) == chunk;
+            if (read_ok && memcmp(segment, "Exif\0\0", 6) == 0) {
+                exif_orientation = sniff_jpeg_exif_orientation(segment, chunk);
+                exif_seen = true;
+            }
+            free(segment);
+            if (!read_ok) {
+                return false;
+            }
+            if (payload_len > chunk &&
+                fseek(file, (long)(payload_len - chunk), SEEK_CUR) != 0) {
+                return false;
+            }
+            continue;
+        }
+
+        if (payload_len > 0 && fseek(file, (long)payload_len, SEEK_CUR) != 0) {
+            return false;
+        }
+    }
 }
 
 static bool photo_matches_filter(const ephoto_photo_t *item, ephoto_orientation_filter_t filter)
@@ -568,18 +639,27 @@ static void sniff_photo_dimensions(const char *path, ephoto_photo_t *item)
         return;
     }
 
+    // JPEG is sniffed straight from the stream: its EXIF segment can be much
+    // larger than PHOTO_SNIFF_HEADER_SIZE, which would defeat a windowed read.
+    if (sniff_jpeg_stream(file, item)) {
+        apply_photo_effective_orientation(item);
+        fclose(file);
+        return;
+    }
+
+    // PNG and BMP keep their metadata at the very start of the file, so the
+    // bounded header window is sufficient for them.
+    if (fseek(file, 0, SEEK_SET) != 0) {
+        fclose(file);
+        return;
+    }
+
     uint8_t *header = malloc(PHOTO_SNIFF_HEADER_SIZE);
     if (!header) {
         fclose(file);
         return;
     }
     size_t bytes_read = fread(header, 1, PHOTO_SNIFF_HEADER_SIZE, file);
-    if (sniff_jpeg_dimensions(header, bytes_read, item)) {
-        apply_photo_effective_orientation(item);
-        free(header);
-        fclose(file);
-        return;
-    }
 
     if (sniff_png_dimensions(header, bytes_read, item)) {
         apply_photo_effective_orientation(item);
