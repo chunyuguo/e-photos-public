@@ -2923,6 +2923,167 @@ cleanup:
     return err;
 }
 
+// Builds several pending screen-cache products (fit x rotation combos) for one
+// JPEG photo while software-decoding the original only once per distinct
+// libjpeg scale denominator.  generate_jpeg_display_cache() decodes the
+// original once per combo, which makes a full cache build decode the same photo
+// up to 4 times; the combos usually share the same denominator, and when they
+// do not (e.g. wide photos whose contain/cover render plans disagree with the
+// framebuffer-pixel clamp) they are grouped so each group gets its own decode.
+// The decode itself is rotation-agnostic (rotation is applied in the blit), so
+// any combo of a group yields the same pixels.  Progress callbacks, per-combo
+// failure markers and the cache file format are unchanged.
+static esp_err_t generate_jpeg_display_cache_group(const char *path,
+                                                   const jpeg_software_header_info_t *header_info,
+                                                   const ephoto_fit_mode_t *fit_modes,
+                                                   const uint16_t *rotations,
+                                                   uint32_t *out_completed,
+                                                   uint32_t *out_failed,
+                                                   display_service_cache_progress_cb_t progress_cb,
+                                                   void *progress_ctx,
+                                                   esp_err_t *inout_first_err,
+                                                   size_t combo_count)
+{
+    if (!path || !fit_modes || !rotations || combo_count == 0) {
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    uint16_t source_rotation_deg =
+        normalize_source_rotation_deg(lookup_photo_source_rotation_deg(path));
+    uint32_t raw_width = header_info && header_info->valid ? header_info->width : 0;
+    uint32_t raw_height = header_info && header_info->valid ? header_info->height : 0;
+    bool force_full_scale = should_force_full_scale_software_jpeg(header_info);
+    int64_t started_ms = clock_service_now_ms();
+
+    // Copy the pending combos into local arrays (max 4: 2 fits x 2 rotations)
+    // and insertion-sort by the actual scale denominator each combo would use,
+    // so combos sharing a denominator stay adjacent and decode once.
+    ephoto_fit_mode_t sorted_fits[4];
+    uint16_t sorted_rotations[4];
+    unsigned combo_denoms[4];
+    for (size_t i = 0; i < combo_count && i < 4; ++i) {
+        unsigned requested = probe_jpeg_scale_denom(path, fit_modes[i], rotations[i]);
+        combo_denoms[i] = force_full_scale ? 1U : clamp_software_stream_scale_denom(raw_width,
+                                                                                   raw_height,
+                                                                                   requested);
+        sorted_fits[i] = fit_modes[i];
+        sorted_rotations[i] = rotations[i];
+    }
+    for (size_t i = 1; i < combo_count && i < 4; ++i) {
+        unsigned denom = combo_denoms[i];
+        ephoto_fit_mode_t fit = sorted_fits[i];
+        uint16_t rot = sorted_rotations[i];
+        size_t j = i;
+        while (j > 0 && combo_denoms[j - 1] > denom) {
+            combo_denoms[j] = combo_denoms[j - 1];
+            sorted_fits[j] = sorted_fits[j - 1];
+            sorted_rotations[j] = sorted_rotations[j - 1];
+            --j;
+        }
+        combo_denoms[j] = denom;
+        sorted_fits[j] = fit;
+        sorted_rotations[j] = rot;
+    }
+
+    esp_err_t first_err = ESP_OK;
+    decoded_jpeg_t image = {0};
+    unsigned decoded_denom = 0;
+
+    color_pixel_rgb565_data_t *cache_buffer = heap_caps_malloc(s_framebuffer_bytes,
+                                                               MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    if (!cache_buffer) {
+        return ESP_ERR_NO_MEM;
+    }
+
+    size_t i = 0;
+    while (i < combo_count) {
+        size_t j = i;
+        while (j < combo_count && combo_denoms[j] == combo_denoms[i]) {
+            ++j;
+        }
+
+        // Decode once per distinct denominator (or when the previous decode
+        // was never done); reuse the pixels across the whole group.
+        if (decoded_denom != combo_denoms[i] || !image.pixels) {
+            free(image.pixels);
+            memset(&image, 0, sizeof(image));
+            release_runtime_framebuffers_for_cache_build();
+            log_spiram_state("group_before_raw_sw_decode");
+            esp_err_t err = decode_jpeg_file_sw_to_decoded_rgb565(path,
+                                                                  header_info,
+                                                                  sorted_fits[i],
+                                                                  sorted_rotations[i],
+                                                                  &image);
+            log_spiram_state(err == ESP_OK ? "group_after_decode_ok" : "group_after_decode_fail");
+            if (err != ESP_OK) {
+                // Every combo in this group fails with the same root cause;
+                // record a marker for each and stop.
+                for (size_t k = i; k < j; ++k) {
+                    save_cache_failure_marker(path, sorted_rotations[k], sorted_fits[k], err);
+                    if (out_completed) {
+                        *out_completed += 1U;
+                    }
+                    if (out_failed) {
+                        *out_failed += 1U;
+                    }
+                    if (progress_cb) {
+                        progress_cb(progress_ctx,
+                                    out_completed ? *out_completed : 0U,
+                                    out_failed ? *out_failed : 1U);
+                    }
+                }
+                if (first_err == ESP_OK) {
+                    first_err = err;
+                }
+                break;
+            }
+            decoded_denom = combo_denoms[i];
+        }
+
+        for (size_t k = i; k < j; ++k) {
+            esp_err_t err = save_decoded_jpeg_cache(path,
+                                                    &image,
+                                                    sorted_fits[k],
+                                                    sorted_rotations[k],
+                                                    source_rotation_deg,
+                                                    cache_buffer);
+            if (out_completed) {
+                *out_completed += 1U;
+            }
+            if (err != ESP_OK) {
+                save_cache_failure_marker(path, sorted_rotations[k], sorted_fits[k], err);
+                if (out_failed) {
+                    *out_failed += 1U;
+                }
+                if (first_err == ESP_OK) {
+                    first_err = err;
+                }
+            }
+            if (progress_cb) {
+                progress_cb(progress_ctx,
+                            out_completed ? *out_completed : 0U,
+                            out_failed ? *out_failed : (err != ESP_OK ? 1U : 0U));
+            }
+        }
+        i = j;
+    }
+
+    free(cache_buffer);
+    free(image.pixels);
+    if (first_err == ESP_OK) {
+        ESP_LOGI(TAG,
+                 "prepared display cache group for %s in %lldms (%u combos shared 1/%u decode)",
+                 path,
+                 (long long)(clock_service_now_ms() - started_ms),
+                 (unsigned)combo_count,
+                 decoded_denom ? decoded_denom : 1U);
+    }
+    if (inout_first_err && *inout_first_err == ESP_OK) {
+        *inout_first_err = first_err;
+    }
+    return first_err;
+}
+
 static bool should_defer_foreground_render(const char *path,
                                            size_t size_bytes,
                                            uint32_t width,
@@ -4279,28 +4440,22 @@ esp_err_t display_service_prepare_missing_photo_caches(const char *source_path,
         }
 
         if (pending_count > 0) {
-            esp_err_t err = ESP_OK;
             for (size_t i = 0; i < pending_count; ++i) {
                 clear_cache_failure_marker(source_path, pending_rotations[i], pending_fit_modes[i]);
-                err = generate_jpeg_display_cache(source_path,
-                                                  &header_info,
-                                                  pending_fit_modes[i],
-                                                  pending_rotations[i]);
-                if (out_completed) {
-                    *out_completed += 1U;
-                }
-                if (err != ESP_OK) {
-                    save_cache_failure_marker(source_path, pending_rotations[i], pending_fit_modes[i], err);
-                    if (out_failed) {
-                        *out_failed += 1U;
-                    }
-                }
-                if (progress_cb) {
-                    progress_cb(progress_ctx,
-                                out_completed ? *out_completed : 0U,
-                                out_failed ? *out_failed : (err != ESP_OK ? 1U : 0U));
-                }
             }
+            // One grouped pass decodes the original once per distinct scale
+            // denominator instead of once per combo; progress and failure
+            // markers are still reported per combo by the grouped builder.
+            esp_err_t err = generate_jpeg_display_cache_group(source_path,
+                                                              &header_info,
+                                                              pending_fit_modes,
+                                                              pending_rotations,
+                                                              out_completed,
+                                                              out_failed,
+                                                              progress_cb,
+                                                              progress_ctx,
+                                                              &first_err,
+                                                              pending_count);
 
             if (err != ESP_OK && first_err == ESP_OK) {
                 first_err = err;
